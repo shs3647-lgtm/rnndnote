@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AMP RNote 화면구성안 v1.0</title>
+<style>
+:root{--navy:#1F4E79;--navy2:#2c6aa0;--ink:#1d2433;--muted:#6b7385;--line:#dde2ea;--bg:#f3f5f9;--card:#fff;--ok:#1e7b4a;--okbg:#e3f5ea;--warn:#a85a00;--warnbg:#fff1dc;--bad:#b42318;--badbg:#fde8e7;--ai:#5b3fc4;--aibg:#efeafd}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",sans-serif;color:var(--ink);background:#e9edf3;font-size:14px}
+.top{background:#0f2238;color:#fff;padding:14px 24px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.top h1{font-size:18px;margin:0}
+.top small{opacity:.75}
+.picker{display:flex;flex-wrap:wrap;gap:6px;padding:12px 24px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+.picker button{border:1px solid var(--line);background:#fff;border-radius:16px;padding:5px 12px;font-size:12.5px;cursor:pointer;font-family:inherit}
+.picker button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.stage{padding:20px 24px 60px}
+.desc{max-width:1280px;margin:0 auto 10px;color:var(--muted);font-size:13px}
+.desc b{color:var(--navy)}
+/* app frame */
+.app{max-width:1280px;margin:0 auto;background:var(--bg);border:1px solid #c9d1dd;border-radius:10px;overflow:hidden;box-shadow:0 6px 24px rgba(15,34,56,.12);display:grid;grid-template-columns:200px 1fr;min-height:720px}
+.side{background:#14304f;color:#cfe0f3;padding:16px 0}
+.side .logo{color:#fff;font-weight:bold;padding:0 18px 14px;font-size:15px;border-bottom:1px solid rgba(255,255,255,.12)}
+.side .logo span{display:block;font-size:11px;font-weight:normal;opacity:.7}
+.side a{display:flex;justify-content:space-between;padding:9px 18px;color:#cfe0f3;text-decoration:none;font-size:13px}
+.side a.on{background:#1F4E79;color:#fff;border-left:3px solid #7fb6ec}
+.side .cnt{background:#e8574a;color:#fff;border-radius:9px;padding:0 6px;font-size:11px}
+.side .me{margin-top:20px;padding:12px 18px;border-top:1px solid rgba(255,255,255,.12);font-size:12px;opacity:.85}
+.main{padding:18px 22px;min-width:0}
+.bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.bar h2{margin:0;font-size:18px;color:var(--navy)}
+.crumb{font-size:12px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-bottom:14px}
+.card h3{margin:0 0 10px;font-size:14px;color:var(--navy);display:flex;justify-content:space-between;align-items:center}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.g73{display:grid;grid-template-columns:1.7fr 1fr;gap:14px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.kpi .l{font-size:12px;color:var(--muted)}
+.kpi .v{font-size:22px;font-weight:bold;color:var(--navy);margin-top:4px}
+.kpi .s{font-size:11.5px;color:var(--muted)}
+.btn{display:inline-block;border:1px solid var(--navy);background:var(--navy);color:#fff;border-radius:6px;padding:6px 12px;font-size:12.5px;cursor:default;font-family:inherit}
+.btn.o{background:#fff;color:var(--navy)}
+.btn.r{background:#fff;color:var(--bad);border-color:var(--bad)}
+.btn.g{background:var(--ok);border-color:var(--ok)}
+.btn.ai{background:var(--ai);border-color:var(--ai)}
+.btn.sm{padding:3px 8px;font-size:11.5px}
+.pill{display:inline-block;border-radius:10px;padding:1px 8px;font-size:11.5px;font-weight:bold}
+.p-draft{background:#eceff4;color:#4a5568}.p-sub{background:#e3eefb;color:#1d5fa8}.p-rev{background:var(--warnbg);color:var(--warn)}
+.p-conf{background:var(--okbg);color:var(--ok)}.p-ret{background:var(--badbg);color:var(--bad)}.p-ai{background:var(--aibg);color:var(--ai)}
+table{border-collapse:collapse;width:100%;font-size:12.8px}
+th,td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
+th{background:#f4f7fb;color:#3b4a5e;font-weight:bold;white-space:nowrap}
+.f{margin-bottom:10px}
+.f label{display:block;font-size:12px;font-weight:bold;color:#3b4a5e;margin-bottom:4px}
+.f label .req{color:var(--bad)}
+.in{border:1px solid #c9d1dd;border-radius:6px;background:#fff;padding:7px 9px;font-size:13px;min-height:34px;color:var(--ink)}
+.in.ta{min-height:64px;line-height:1.55}
+.in.ro{background:#f4f6f9;color:#556}
+.aimark{border-left:3px solid var(--ai);background:#faf8ff}
+.chk{display:flex;align-items:center;gap:6px;font-size:12px;margin-top:4px;color:var(--ai)}
+.box{width:14px;height:14px;border:1.5px solid #8a94a6;border-radius:3px;display:inline-block;background:#fff;position:relative}
+.box.on{background:var(--ok);border-color:var(--ok)}
+.box.on:after{content:"✓";color:#fff;font-size:11px;position:absolute;left:2px;top:-2px}
+.mono{font-family:Consolas,"D2Coding",monospace;font-size:12px}
+.note{font-size:11.5px;color:var(--muted)}
+.bad{color:var(--bad)}.ok{color:var(--ok)}.warn{color:var(--warn)}
+.prog{height:8px;background:#e6ebf2;border-radius:4px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--navy2)}
+.tabs{display:flex;gap:2px;border-bottom:2px solid var(--line);margin-bottom:12px}
+.tabs span{padding:7px 14px;font-size:13px;color:var(--muted);border-radius:6px 6px 0 0}
+.tabs span.on{background:#fff;color:var(--navy);font-weight:bold;border:1px solid var(--line);border-bottom:2px solid #fff;margin-bottom:-2px}
+.ann{position:relative}
+.ann[data-n]:before{content:attr(data-n);position:absolute;top:-9px;right:-9px;background:#e8574a;color:#fff;width:20px;height:20px;border-radius:50%;font-size:11px;font-weight:bold;display:flex;align-items:center;justify-content:center;z-index:2}
+.legend{max-width:1280px;margin:14px auto 0;background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 16px;font-size:12.8px}
+.legend h4{margin:0 0 6px;color:var(--navy);font-size:13px}
+.legend ol{margin:0;padding-left:0;list-style:none;columns:2;column-gap:28px}
+.legend li{margin:3px 0;break-inside:avoid}
+.legend li b{display:inline-block;background:#e8574a;color:#fff;border-radius:50%;width:18px;height:18px;text-align:center;font-size:11px;line-height:18px;margin-right:6px}
+.screen{display:none}.screen.on{display:block}
+/* sheet (속지) */
+.sheet{background:#fff;border:1px solid #c9d1dd;padding:18px;max-width:640px;margin:0 auto;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.sheet .inner{border:2px solid #222;padding:12px 14px;min-height:640px;position:relative;font-size:12.3px;line-height:1.55}
+.sheet .pg{position:absolute;right:10px;top:8px;border:1.5px solid #222;padding:1px 8px;font-weight:bold}
+.sheet h5{margin:10px 0 3px;font-size:12.5px;border-bottom:1px solid #999}
+.sheet .sign{position:absolute;left:12px;right:12px;bottom:34px}
+.sheet .sign table td,.sheet .sign table th{border:1px solid #333;font-size:11.5px;padding:5px}
+.sheet .hash{position:absolute;left:12px;right:12px;bottom:8px;font-size:10px;color:#555}
+del{color:#b42318}
+ins{color:#1e7b4a;text-decoration:none;background:#e3f5ea}
+/* gantt */
+.gantt{display:grid;grid-template-columns:230px repeat(5,1fr);font-size:12px;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#fff}
+.gantt div{padding:6px 8px;border-bottom:1px solid #edf0f5;border-right:1px solid #edf0f5;min-height:34px;position:relative}
+.gantt .h{background:#f4f7fb;font-weight:bold;color:#3b4a5e;text-align:center}
+.gb{position:absolute;left:4px;right:4px;height:7px;border-radius:3px}
+.gb.p{top:8px;background:#b8cde6}
+.gb.a{top:19px;background:var(--navy2)}
+.gb.a.late{background:#e08a2c}
+/* calendar */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-size:12px}
+.cal>div{background:#fff;border:1px solid var(--line);border-radius:5px;min-height:54px;padding:4px 6px}
+.cal>.h{min-height:auto;background:none;border:none;text-align:center;color:var(--muted);font-weight:bold}
+.cal .d{color:var(--muted);font-size:11px}
+.cal .st{font-size:15px;margin-top:4px;text-align:center}
+.cal .off{background:#f7f8fa}
+/* phone */
+.phone{width:300px;border:10px solid #1b1f27;border-radius:30px;background:#fff;overflow:hidden;margin:0 auto}
+.phone .sb{background:#1b1f27;color:#fff;font-size:10px;padding:2px 14px 6px;display:flex;justify-content:space-between}
+.phone .ph{padding:12px}
+.kakao{background:#b2c7d9;padding:12px;border-radius:0}
+.kbubble{background:#fff;border-radius:10px;overflow:hidden;font-size:12px;box-shadow:0 1px 2px rgba(0,0,0,.1)}
+.kbubble .kh{background:#fee500;padding:7px 10px;font-weight:bold;font-size:12px}
+.kbubble .kb{padding:10px;line-height:1.55}
+.kbubble .kbtn{border-top:1px solid #eee;text-align:center;padding:8px;color:#333;font-weight:bold}
+.mail{border:1px solid var(--line);border-radius:6px;background:#fff;font-size:12.3px}
+.mail .mh{background:#f4f7fb;padding:8px 12px;border-bottom:1px solid var(--line)}
+.mail .mb{padding:10px 12px;line-height:1.6}
+/* login */
+.loginwrap{display:flex;gap:22px;justify-content:center;padding:30px 0}
+.lcard{width:320px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:22px}
+.lcard h3{margin:0 0 4px;color:var(--navy)}
+.otp{display:flex;gap:6px;margin:10px 0}
+.otp span{width:36px;height:42px;border:1px solid #c9d1dd;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:bold}
+.step{font-size:11px;color:var(--muted);margin-bottom:12px}
+.toast{background:var(--okbg);color:var(--ok);border:1px solid #b8e2c8;border-radius:6px;padding:8px 12px;font-size:12.5px;margin-bottom:12px}
+.alert{background:var(--warnbg);color:var(--warn);border:1px solid #f0d2a4;border-radius:6px;padding:8px 12px;font-size:12.5px;margin-bottom:12px}
+.alertr{background:var(--badbg);color:var(--bad);border:1px solid #f2c1bd;border-radius:6px;padding:8px 12px;font-size:12.5px;margin-bottom:12px}
+@media print{.picker{display:none}.screen{display:block;page-break-after:always}}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>AMP RNote 전자연구노트 — 화면구성안 v1.0</h1>
+  <small>기술문서 RNOTE-SPEC-001 14장(SC-01~SC-11) 기준 · 2026-10-28 · 예시 데이터는 가상</small>
+</div>
+<div class="picker" id="picker"></div>
+<div class="stage" id="stage">
+
+<!-- ===================== SC-01 ===================== -->
+<section class="screen" data-id="SC-01" data-title="로그인·2단계인증·서명PIN">
+<div class="desc"><b>SC-01 로그인 / 2단계 인증 / 서명키 등록</b> — 모든 사용자. 최초 로그인 시에만 ③ 서명PIN 설정이 나온다.</div>
+<div class="app" style="grid-template-columns:1fr">
+ <div class="main" style="background:linear-gradient(135deg,#14304f,#1F4E79)">
+  <div class="loginwrap">
+   <div class="lcard ann" data-n="1">
+    <div class="step">STEP 1 / 3</div>
+    <h3>AMP RNote</h3><div class="note">㈜에이엠피시스템 연구전담부서 전자연구노트</div><br>
+    <div class="f"><label>이메일</label><div class="in">hwlee@ampbiz.co.kr</div></div>
+    <div class="f"><label>비밀번호</label><div class="in">••••••••••</div></div>
+    <div class="btn" style="width:100%;text-align:center">로그인</div>
+    <p class="note">5회 실패 시 계정 잠김 · 외부 비공개 시스템</p>
+   </div>
+   <div class="lcard ann" data-n="2">
+    <div class="step">STEP 2 / 3</div>
+    <h3>2단계 인증</h3><div class="note">Google Authenticator 앱의 6자리 코드</div>
+    <div class="otp"><span>4</span><span>8</span><span>1</span><span>0</span><span>7</span><span>3</span></div>
+    <div class="btn" style="width:100%;text-align:center">확인</div>
+    <p class="note">최초 1회: QR코드 스캔으로 등록</p>
+   </div>
+   <div class="lcard ann" data-n="3">
+    <div class="step">STEP 3 / 3 (최초 1회)</div>
+    <h3>전자서명 PIN 설정</h3><div class="note">노트 제출·결재 시 서명에 사용됩니다. 본인만 알아야 합니다.</div><br>
+    <div class="f"><label>서명 PIN (6자리)</label><div class="in">••••••</div></div>
+    <div class="f"><label>PIN 확인</label><div class="in">••••••</div></div>
+    <div class="note" style="margin-bottom:10px">🔑 서명키(Ed25519)가 생성되어 PIN으로 암호화 저장됩니다.<br>공개키 지문: <span class="mono">SHA256:9f2c…a71e</span></div>
+    <div class="btn g" style="width:100%;text-align:center">서명키 생성</div>
+   </div>
+  </div>
+ </div>
+</div>
+<div class="legend"><h4>설명</h4><ol>
+<li><b>1</b>비밀번호는 argon2id 저장. 로그인·실패는 감사로그 기록</li>
+<li><b>2</b>TOTP 2단계 인증 — 전자서명인증 요건(R1) 보강</li>
+<li><b>3</b>서명PIN = 서명행위 의사확인. 2차에 공인 인증서로 교체 가능</li>
+</ol></div>
+</section>
+
+<!-- ===================== SC-02 ===================== -->
+<section class="screen" data-id="SC-02" data-title="대시보드">
+<div class="desc"><b>SC-02 대시보드</b> — 로그인 직후 첫 화면. 기록자(이현우) 기준 예시. 확인자 로그인 시 ⑤ 미결재가 맨 위로 온다.</div>
+<div class="app">
+ <aside class="side" data-active="대시보드"></aside>
+ <div class="main">
+  <div class="bar"><div><div class="crumb">홈</div><h2>2026-11-09 (월) 오늘의 연구</h2></div><div><span class="btn">＋ 오늘 노트 작성</span></div></div>
+  <div class="grid4">
+   <div class="kpi ann" data-n="1"><div class="l">오늘 노트</div><div class="v"><span class="pill p-draft">작성 중</span></div><div class="s">커밋 3건 자동수집 · 마감 18:00</div></div>
+   <div class="kpi"><div class="l">이번 주 진도</div><div class="v">42%</div><div class="prog"><i style="width:42%"></i></div></div>
+   <div class="kpi"><div class="l">이번 달 노트</div><div class="v">6 / 6</div><div class="s">확인 5 · 검토 대기 1</div></div>
+   <div class="kpi"><div class="l">미조치 피드백</div><div class="v bad">2</div><div class="s">가장 오래된 것: 11-05</div></div>
+  </div><br>
+  <div class="g73">
+   <div>
+    <div class="card ann" data-n="2"><h3>오늘 할 일 <span class="note">주간계획 W45 · 승인됨</span></h3>
+     <table><tr><th>태스크</th><th>계획</th><th>진척</th><th>상태</th></tr>
+     <tr><td>FC시트 N:1:N 매핑 파서 수정</td><td>3h</td><td style="width:120px"><div class="prog"><i style="width:60%"></i></div></td><td><span class="pill p-sub">진행</span></td></tr>
+     <tr><td>Import 회귀테스트 케이스 작성 <span class="pill p-ret">이월 1회</span></td><td>2h</td><td><div class="prog"><i style="width:0%"></i></div></td><td><span class="pill p-draft">대기</span></td></tr>
+     <tr><td>FC_SHEET_RULE.md 규칙 문서 갱신</td><td>1h</td><td><div class="prog"><i style="width:100%"></i></div></td><td><span class="pill p-conf">완료</span></td></tr>
+     </table></div>
+    <div class="card ann" data-n="3"><h3>어제 내가 적은 다음 계획 <span class="note">11-06 노트 p.0006</span></h3>
+     <div class="in ro ta">- FC시트에서 FM 1개에 FC 여러 개 연결되는 케이스 파서 수정<br>- 수정 후 넥센 샘플 엑셀로 Import 재확인</div></div>
+    <div class="card"><h3>오늘 자동수집된 커밋 <span class="note">GitHub push</span></h3>
+     <table><tr><th>시각</th><th>저장소</th><th>커밋</th><th>파일</th></tr>
+     <tr><td>10:42</td><td>ampfmea</td><td class="mono">a1b2c3d fix: FC N:1:N mapping</td><td>3</td></tr>
+     <tr><td>14:15</td><td>ampfmea</td><td class="mono">e4f5a6b docs: FC_SHEET_RULE 갱신</td><td>1 <span class="pill p-sub">md</span></td></tr>
+     <tr><td>16:03</td><td>ampfmea</td><td class="mono">9c8d7e1 test: parser fixture</td><td>2</td></tr></table></div>
+   </div>
+   <div>
+    <div class="card ann" data-n="4"><h3>미조치 피드백</h3>
+     <div style="font-size:12.5px;line-height:1.6"><b>신흥섭</b> · 11-05 p.0004<br>"결과에 실패한 첫 시도 로그도 남길 것"<br><span class="btn sm o">조치 노트 연결</span><hr style="border:none;border-top:1px solid var(--line)"><b>신재민</b> · 11-06 p.0006<br>"테스트 데이터 파일 경로 누락"<br><span class="btn sm o">조치 노트 연결</span></div></div>
+    <div class="card ann" data-n="5"><h3>결재 진행</h3>
+     <table><tr><th>일자</th><th>쪽</th><th>상태</th></tr>
+     <tr><td>11-06</td><td>0006</td><td><span class="pill p-rev">확인 대기</span></td></tr>
+     <tr><td>11-05</td><td>0005</td><td><span class="pill p-conf">확인완료</span></td></tr>
+     <tr><td>11-04</td><td>0004</td><td><span class="pill p-conf">확인완료</span></td></tr></table></div>
+    <div class="card"><h3>Claude 제안 다음할일 <span class="pill p-ai">AI 참고</span></h3>
+     <div style="font-size:12.5px;line-height:1.6">① FC시트 회귀테스트 추가 (H, 2h)<br>② 빈 FC 셀 예외처리 (M, 1h)</div></div>
+   </div>
+  </div>
+ </div>
+</div>
+<div class="legend"><h4>설명</h4><ol>
+<li><b>1</b>오늘 노트 상태·마감시각. 17:30 미제출 시 카톡 리마인드</li>
+<li><b>2</b>주간계획의 오늘 태스크. 미완료 2회 이월 시 경고</li>
+<li><b>3</b>전날 노트의 "다음 계획" 자동 표시</li>
+<li><b>4</b>검토·확인자 피드백 → 조치한 노트와 연결해야 해소</li>
+<li><b>5</b>본인 노트 결재 진행 상태</li>
+</ol></div>
+</section>
+
+<!-- ===================== SC-03 ===================== -->
+<section class="screen" data-id="SC-03" data-title="노트 작성">
+<div class="desc"><b>SC-03 일일 연구노트 작성</b> — 기록자 전용. 왼쪽 양식, 오른쪽 자동수집·AI 패널. 작성일시·쪽번호는 서버가 부여(수정 불가).</div>
+<div class="app">
+ <aside class="side" data-active="연구노트"></aside>
+ <div class="main">
+  <div class="bar"><div><div class="crumb">연구노트 › 작성</div><h2>AMP-RN-2026-001 · p.0007 · 2026-11-09</h2></div>
+   <div><span class="note">자동저장 16:48:12 &nbsp;</span><span class="btn ai ann" data-n="3">✨ AI 초안 생성</span> <span class="btn o">임시저장</span> <span class="btn g ann" data-n="6">제출·서명</span></div></div>
+  <div class="g73">
+   <div class="card">
+    <div class="grid3 ann" data-n="1">
+     <div class="f"><label>과제명</label><div class="in ro">Smart FMEA AI 자동화 고도화 (TODO_CONFIRM)</div></div>
+     <div class="f"><label>최초 입력(서버)</label><div class="in ro">2026-11-09 09:12:40</div></div>
+     <div class="f"><label>기록자</label><div class="in ro">이현우 (연구전담부서)</div></div>
+    </div>
+    <div class="f"><label>실험명/제목 <span class="req">*</span></label><div class="in">PFMEA Import 파서 — FC시트 FM:FC N:1:N 매핑 수정</div></div>
+    <div class="f"><label>목적 <span class="req">*</span></label><div class="in ta">FC시트에서 하나의 고장형태(FM)에 여러 고장원인(FC)이 연결될 때 마지막 FC만 저장되는 문제를 해결하여 고장사슬이 누락 없이 Import되게 한다.</div></div>
+    <div class="f ann" data-n="4"><label>방법/과정 <span class="req">*</span> <span class="pill p-ai">AI 초안</span></label><div class="in ta aimark">1) 넥센 샘플 엑셀(FC 214행)로 재현 → FM 38건 중 11건에서 FC 누락 확인<br>2) excel-parser.ts의 FM 키 dedup 로직을 Map&lt;FM, FC[]&gt; 누적 방식으로 변경<br>3) 동일 파일 재Import 후 DB 건수 비교</div>
+     <div class="chk"><span class="box on"></span> 사실 확인함 (기록자 본인이 내용을 확인·수정)</div></div>
+    <div class="f"><label>결과 <span class="req">*</span> <span class="pill p-ai">AI 초안</span></label><div class="in ta aimark">FC 누락 11건 → 0건. 단, FC 셀이 빈 행 3건에서 예외 발생(실패). 해당 행은 Import 제외됨.</div>
+     <div class="chk"><span class="box"></span> <span class="bad">사실 확인 필요 — 체크 전 제출 불가</span></div></div>
+    <div class="f"><label>해석·결론 <span class="req">*</span></label><div class="in ta">N:1:N 누적 방식으로 주요 문제 해결. 빈 FC 셀 처리는 미해결 — 내일 예외처리 추가. 대안(FC를 별도 시트로 분리)은 고객 양식 변경이 필요해 채택하지 않음.</div></div>
+    <details open><summary style="cursor:pointer;font-weight:bold;color:var(--navy);font-size:12.5px;margin:6px 0">추가 기재사항 (해당 시)</summary>
+     <div class="grid2">
+      <div class="f"><label>실패 데이터</label><div class="in ta">빈 FC 셀 3행(214행 중 52·87·190행) TypeError 로그 첨부</div></div>
+      <div class="f"><label>특이사항·예상외 결과</label><div class="in ta">FM명이 공백만 다른 경우 별개 FM으로 인식됨</div></div>
+      <div class="f"><label>측정방법·획득조건</label><div class="in">로컬 DB, 넥센 샘플 v3, Import 3회 반복</div></div>
+      <div class="f"><label>참고문헌·자료</label><div class="in">AIAG-VDA FMEA 1판 고장사슬 구조</div></div>
+      <div class="f"><label>새 가설·발상</label><div class="in">FM명 정규화 규칙 필요 <span class="box"></span> 특허 검토</div></div>
+      <div class="f"><label>표준절차 참조·수정</label><div class="in">CLAUDE.md Import 규칙 3항 수정</div></div>
+     </div></details>
+    <div class="f ann" data-n="5"><label>오늘 진도 <span class="req">*</span></label>
+     <table><tr><th>태스크</th><th>진척%</th><th>실제시간</th></tr>
+     <tr><td>FC시트 N:1:N 매핑 파서 수정</td><td><div class="in" style="min-height:26px;padding:3px 7px">80</div></td><td><div class="in" style="min-height:26px;padding:3px 7px">3.5</div></td></tr>
+     <tr><td>Import 회귀테스트 케이스 작성</td><td><div class="in" style="min-height:26px;padding:3px 7px">20</div></td><td><div class="in" style="min-height:26px;padding:3px 7px">1.0</div></td></tr>
+     <tr><td>FC_SHEET_RULE.md 규칙 문서 갱신</td><td><div class="in" style="min-height:26px;padding:3px 7px">100</div></td><td><div class="in" style="min-height:26px;padding:3px 7px">1.0</div></td></tr></table></div>
+    <div class="f"><label>다음 계획 <span class="req">*</span></label><div class="in ta">- 빈 FC 셀 예외처리 추가<br>- 회귀테스트 3케이스 완성</div></div>
+    <div class="f"><label><span class="box on"></span> 중요 노트 (목차 등재) — 목차 설명</label><div class="in">FC시트 N:1:N 매핑 구조 변경</div></div>
+   </div>
+   <div>
+    <div class="card ann" data-n="2"><h3>관련 파일 경로 <span class="pill p-sub">필수 1건↑</span></h3>
+     <table class="mono" style="font-size:11.5px"><tr><th>경로</th><th>유형</th><th>커밋</th></tr>
+     <tr><td>ampfmea:src/lib/excel-parser.ts</td><td>M</td><td>a1b2c3d</td></tr>
+     <tr><td>ampfmea:src/lib/failureChainInjector.ts</td><td>M</td><td>a1b2c3d</td></tr>
+     <tr><td><b>ampfmea:docs/import/FC_SHEET_RULE.md</b> <span class="pill p-sub">md</span></td><td>M</td><td>e4f5a6b</td></tr>
+     <tr><td><b>ampfmea:CLAUDE.md</b> <span class="pill p-sub">md</span></td><td>M</td><td>e4f5a6b</td></tr>
+     <tr><td>ampfmea:tests/fixtures/nexen_v3.xlsx</td><td>A</td><td>9c8d7e1</td></tr></table>
+     <div style="margin-top:8px"><span class="btn sm o">＋ 경로 직접 추가</span></div></div>
+    <div class="card"><h3>자동수집 커밋 (3)</h3>
+     <div class="mono" style="font-size:11.5px;line-height:1.7">a1b2c3d 10:42 fix: FC N:1:N mapping<br>e4f5a6b 14:15 docs: FC_SHEET_RULE 갱신<br>9c8d7e1 16:03 test: parser fixture</div>
+     <div class="note">rn-push 메모: "넥센 샘플로 재현 확인"</div></div>
+    <div class="card"><h3>첨부</h3>
+     <div style="font-size:12px;line-height:1.7">📎 typeerror_log.txt <span class="mono note">sha256 3e9a…c41f</span><br>📎 import_before_after.png <span class="mono note">sha256 77b0…19d2</span></div>
+     <div style="border:1.5px dashed #b9c3d1;border-radius:6px;padding:10px;text-align:center;color:var(--muted);font-size:12px;margin-top:8px">파일을 끌어다 놓기</div></div>
+    <div class="card" style="background:#fffaf2"><h3>작성 원칙</h3>
+     <div style="font-size:12px;line-height:1.6">• 실패 데이터도 반드시 기재<br>• 사실만 기록, 의견·추측 금지<br>• 업무수첩이 아님 (일정·잡무 기재 X)<br>• 재현 가능하게 방법·조건 기재</div></div>
+   </div>
+  </div>
+ </div>
+</div>
+<div class="legend"><h4>설명</h4><ol>
+<li><b>1</b>과제·작성일시·기록자는 자동, 수정 불가 (R2)</li>
+<li><b>2</b>git diff 자동 + 수동 추가. md는 강조. 0건이면 제출 불가 (R10)</li>
+<li><b>3</b>커밋·메모로 Claude 초안 생성 — 보라색 표시</li>
+<li><b>4</b>AI 초안 섹션은 "사실 확인함" 체크해야 제출 가능 (R9)</li>
+<li><b>5</b>주간계획 태스크 진척·실제시간 → 일일진도 반영</li>
+<li><b>6</b>제출 시 서명PIN 입력 → Revision·해시 생성 → 신재민에게 메일·카톡</li>
+</ol></div>
+</section>
+
+<!-- ===================== SC-04 ===================== -->
+<section class="screen" data-id="SC-04" data-title="노트 상세·속지보기">
+<div class="desc"><b>SC-04 노트 상세 / 속지 보기</b> — 탭: 속지 · 수정이력 · AI 평가 · 피드백. 속지는 PDF 출력과 동일 레이아웃.</div>
+<div class="app">
+ <aside class="side" data-active="연구노트"></aside>
+ <div class="main">
+  <div class="bar"><div><div class="crumb">연구노트 › AMP-RN-2026-001</div><h2>p.0006 · 2026-11-06 <span class="pill p-rev">확인 대기</span></h2></div><div><span class="btn o">PDF</span> <span class="btn o">수정(Revision)</span></div></div>
+  <div class="tabs"><span class="on">속지</span><span>수정이력 (2)</span><span>AI 평가</span><span>피드백 (1)</span></div>
+  <div class="g73">
+   <div class="sheet ann" data-n="1"><div class="inner">
+    <div class="pg">p. 0006</div>
+    <div style="font-size:11px;color:#444">㈜에이엠피시스템 연구전담부서 · AMP-RN-2026-001</div>
+    <div><b>과제</b> Smart FMEA AI 자동화 고도화 &nbsp; <b>작성일</b> 2026-11-06 (입력 09:05:31)</div>
+    <div style="font-size:14px;font-weight:bold;margin-top:6px">FM명 정규화 규칙 실험</div>
+    <h5>목적</h5><div>공백·전각문자 차이로 동일 FM이 분리 인식되는 문제 원인 확인</div>
+    <h5>방법/과정</h5><div>1) FM명 214건 추출 2) trim·NFKC 정규화 전후 고유값 비교</div>
+    <h5>결과</h5><div>고유 FM <del>41건 → 38건</del> <ins>41건 → 36건</ins> <span style="font-size:10px;color:#b42318">[Rev2 수정: 집계 오류 정정, 11-07 10:12 이현우]</span></div>
+    <h5>해석·결론</h5><div>NFKC 정규화 적용 시 중복 해소. 전각 괄호 케이스 별도 처리 필요.</div>
+    <h5>관련 파일</h5><div class="mono" style="font-size:10.5px">ampfmea:src/lib/normalize.ts (A, 77aa01c) · ampfmea:docs/import/FM_NORMALIZE.md (A, 77aa01c)</div>
+    <h5>첨부</h5><div style="font-size:11px">fm_unique_compare.xlsx (sha256 a90c41e2b7d3)</div>
+    <div class="sign"><table><tr><th>기록자</th><th>검토자</th><th>확인자</th></tr>
+     <tr><td>이현우 ✍ 서명<br>11-06 17:48</td><td>신재민 ✍ 서명<br>11-07 09:30</td><td style="color:#999">(대기)</td></tr></table></div>
+    <div class="hash">content 4be1f0a9c2d7e631 · chain 0c7d22ae91f4b8d5 · 검증 rnote.ampbiz.co.kr/verify/…</div>
+   </div></div>
+   <div>
+    <div class="card ann" data-n="2"><h3>수정이력</h3>
+     <table><tr><th>Rev</th><th>일시(서버)</th><th>사유</th></tr>
+     <tr><td>1</td><td>11-06 17:48</td><td>최초 제출</td></tr>
+     <tr><td>2</td><td>11-07 10:12</td><td>결과 집계 오류 정정</td></tr></table>
+     <div class="note">이전 내용은 삭제되지 않고 취소선으로 남습니다.</div></div>
+    <div class="card ann" data-n="3"><h3>AI 평가 <span class="pill p-ai">참고 — 연구노트 본문 아님</span></h3>
+     <table><tr><td>기록 충실도</td><td>★★★★☆</td></tr><tr><td>재현 가능성</td><td>★★★☆☆</td></tr><tr><td>계획 대비 진도</td><td>★★★★☆</td></tr><tr><td>증빙 연결</td><td>★★★★★</td></tr></table>
+     <div style="font-size:12px;line-height:1.6;margin-top:6px"><b>보완점</b> 측정조건(데이터 버전) 미기재<br><b>다음할일</b> 전각 괄호 정규화 (H, 1h)</div></div>
+    <div class="card ann" data-n="4"><h3>피드백</h3>
+     <div style="font-size:12.5px;line-height:1.6"><b>신재민</b> 11-07 09:30<br>테스트 데이터 파일 경로 누락 — 다음 노트에 보완 바랍니다.<br><span class="pill p-ret">미조치</span></div>
+     <div class="in ta" style="margin-top:8px;color:#999">피드백 입력…</div></div>
+   </div>
+  </div>
+ </div>
+</div>
+<div class="legend"><h4>설명</h4><ol>
+<li><b>1</b>속지: 테두리·쪽번호·하단 서명란·해시 — KOITA 서면노트 양식 준용 (R5·R6)</li>
+<li><b>2</b>Revision 이력. 수정표시 영구 보존 (R4)</li>
+<li><b>3</b>AI 평가는 별도 탭·라벨로 분리 (R9)</li>
+<li><b>4</b>검토·확인자 피드백 — 조치 노트 연결 시 해소</li>
+</ol></div>
+</section>
+
+<!-- ===================== SC-05 ===================== -->
+<section class="screen" data-id="SC-05" data-title="결재함·알림">
+<div class="desc"><b>SC-05 결재함 (PC + 모바일) / 자동메일·카톡 알림</b> — 신재민(검토)·신흥섭(확인). 메일·카톡 링크를 누르면 모바일 결재 화면이 열린다.</div>
+<div class="app">
+ <aside class="side" data-active="결재함"></aside>
+ <div class="main">
+  <div class="bar"><div><div class="crumb">결재함</div><h2>결재 대기 2건</h2></div><div class="tabs" style="margin:0;border:none"><span class="on">대기</span><span>완료</span><span>반려</span></div></div>
+  <div class="g73">
+   <div>
+    <div class="card ann" data-n="1"><table><tr><th>일자</th><th>쪽</th><th>기록자</th><th>제목</th><th>단계</th><th>AI</th><th>경과</th></tr>
+     <tr style="background:#f4f8fd"><td>11-06</td><td>0006</td><td>이현우</td><td>FM명 정규화 규칙 실험</td><td><span class="pill p-rev">확인</span></td><td>4.0</td><td class="warn">2일</td></tr>
+     <tr><td>11-09</td><td>0007</td><td>이현우</td><td>PFMEA Import FC시트 매핑 수정</td><td><span class="pill p-sub">검토</span></td><td>3.8</td><td>0일</td></tr></table></div>
+    <div class="card ann" data-n="2"><h3>p.0006 결재 <span class="note">요약</span></h3>
+     <div style="font-size:12.5px;line-height:1.7"><b>목적</b> FM명 공백·전각 차이로 인한 분리 인식 원인 확인<br><b>결과</b> NFKC 정규화로 고유 FM 41→36건<br><b>관련 파일</b> 2건 (md 1) · <b>첨부</b> 1건 · <b>Rev</b> 2 (사유: 집계 오류 정정)<br><b>무결성</b> <span class="ok">✔ 해시·서명 검증 통과</span></div>
+     <div class="f" style="margin-top:8px"><label>의견 / 피드백</label><div class="in ta">측정 데이터 버전 기재 바람. 확인함.</div></div>
+     <div class="grid2"><div class="f"><label>서명 PIN</label><div class="in">••••••</div></div><div style="display:flex;gap:6px;align-items:flex-end;margin-bottom:10px"><span class="btn g">확인·서명</span><span class="btn r">반려</span><span class="btn o">전문 보기</span></div></div></div>
+   </div>
+   <div>
+    <div class="card ann" data-n="3"><h3>자동메일 미리보기</h3>
+     <div class="mail"><div class="mh"><b>받는사람</b> shs3647@daum.net<br><b>제목</b> [연구노트 결재요청] AMP-RN-2026-001 p.0006 (2026-11-06) 이현우 — FM명 정규화 규칙 실험</div>
+     <div class="mb">- 검토: 신재민 11-07 09:30 승인<br>- 결과: 고유 FM 41→36건<br>- 관련 파일: docs/import/FM_NORMALIZE.md 외 1건<br>- Claude 평가(참고): 4/3/4/5<br><span class="btn sm">▶ 결재하기 (24시간 유효)</span></div></div></div>
+    <div class="card ann" data-n="4"><h3>카톡 알림 + 모바일 결재</h3>
+     <div style="display:flex;gap:10px">
+      <div class="phone" style="width:200px;border-width:7px"><div class="sb"><span>9:01</span><span>●●●</span></div>
+       <div class="kakao"><div class="kbubble"><div class="kh">알림톡 · AMP RNote</div><div class="kb">[연구노트 결재요청]<br>기록자: 이현우<br>일자: 11-06 p.0006<br>제목: FM명 정규화 규칙 실험</div><div class="kbtn">결재하기</div></div></div></div>
+      <div class="phone" style="width:200px;border-width:7px"><div class="sb"><span>9:02</span><span>●●●</span></div>
+       <div class="ph" style="font-size:11.5px;line-height:1.6"><b style="color:var(--navy)">p.0006 확인</b><br><span class="pill p-rev">확인 대기</span><br><br><b>결과</b> 고유 FM 41→36<br><b>AI</b> 4.0 <span class="pill p-ai">참고</span><br><div class="in" style="min-height:26px;font-size:11px;margin:6px 0">의견…</div><div class="in" style="min-height:26px;font-size:11px">PIN ••••••</div><div style="margin-top:6px"><span class="btn sm g">확인</span> <span class="btn sm r">반려</span></div></div></div>
+     </div></div>
+   </div>
+  </div>
+ </div>
+</div>
+<div class="legend"><h4>설명</h4><ol>
+<li><b>1</b>대기 목록 — 경과일 2일↑ 주황, 09:00 대표에게 미결재 카톡</li>
+<li><b>2</b>요약+무결성 확인 후 서명PIN으로 승인/반려(사유 필수)</li>
+<li><b>3</b>이현우 제출 → 신재민, 신재민 승인 → 신흥섭 자동메일</li>
+<li><b>4</b>카카오 알림톡(채널·템플릿 심사 필요) → 모바일 간편결재</li>
+</ol></div>
+</section>
+
+<!-- ===================== SC-06 ===================== -->
+<section class="screen" data-id="SC-06" data-title="주간계획">
+<div class="desc"><b>SC-06 주간계획</b> — 월요일 작성 → 신흥섭 승인. 지난주 미완료 태스크는 자동 이월.</div>
+<div class="app">
+ <aside class="side" data-active="주간계획"></aside>
+ <div class="main">
+  <div class="bar"><div><div class="crumb">계획 › 주간계획</div><h2>W46 · 2026-11-09 ~ 11-13 <span class="pill p-conf">승인됨 11-09 10:20</span></h2></div><div><span class="btn o">◀ W45</span> <span class="btn o">W47 ▶</span> <span class="btn">제출</span></div></div>
+  <div class="g73">
+   <div>
+    <div class="card ann" data-n="1"><h3>주간 목표</h3><div class="in ta">1. PFMEA Import FC시트 N:1:N 구조 완성 및 회귀테스트 확보<br>2. FM명 정규화 적용<br>3. 넥센 샘플 전체 Import 무오류</div></div>
+    <div class="card ann" data-n="2"><h3>일자별 태스크 <span class="btn sm o">＋ 태스크</span></h3>
+     <table><tr><th>일자</th><th>태스크</th><th>계획h</th><th>관련 경로</th><th>비고</th></tr>
+     <tr><td>월 11-09</td><td>FC시트 N:1:N 매핑 파서 수정</td><td>3</td><td class="mono">src/lib/excel-parser.ts</td><td></td></tr>
+     <tr><td>월 11-09</td><td>Import 회귀테스트 케이스 작성</td><td>2</td><td class="mono">tests/import/</td><td><span class="pill p-ret">이월 W45</span></td></tr>
+     <tr><td>월 11-09</td><td>FC_SHEET_RULE.md 규칙 문서 갱신</td><td>1</td><td class="mono">docs/import/FC_SHEET_RULE.md</td><td></td></tr>
+     <tr><td>화 11-10</td><td>빈 FC 셀 예외처리</td><td>2</td><td class="mono">src/lib/excel-parser.ts</td><td></td></tr>
+     <tr><td>화 11-10</td><td>FM명 NFKC 정규화 적용</td><td>4</td><td class="mono">src/lib/normalize.ts</td><td></td></tr>
+     <tr><td>수 11-11</td><td>넥센 샘플 전체 Import 검증</td><td>5</td><td class="mono">tests/fixtures/</td><td></td></tr>
+     <tr><td>목 11-12</td><td>Import 오류 리포트 화면 개선</td><td>6</td><td class="mono">src/app/import/</td><td></td></tr>
+     <tr><td>금 11-13</td><td>주간 정리·문서화</td><td>3</td><td class="mono">docs/</td><td><span class="pill p-sub">추가</span></td></tr></table></div>
+   </div>
+   <div>
+    <div class="card"><h3>요약</h3><table><tr><td>계획 시간</td><td><b>26h</b></td></tr><tr><td>태스크</td><td>8건 (이월 1)</td></tr><tr><td>작성·수정 예정 md</td><td>2건</td></tr></table></div>
+    <div class="card ann" data-n="3"><h3>승인</h3><div style="font-size:12.5px">신흥섭 ✍ 11-09 10:20<br>"목요일 화면개선은 고객 요청 건 우선"</div></div>
+    <div class="card ann" data-n="4"><h3>지난주(W45) 주간보고</h3><div style="font-size:12.5px;line-height:1.6">완료율 78% · 노트 5/5 확인<br>작성·수정 문서 3건<br>피드백 미조치 2<br><span class="btn sm o">주간보고 보기</span></div></div>
+   </div>
+  </div>
+ </div>
+</div>
+<div class="legend"><h4>설명</h4><ol>
+<li><b>1</b>주간 목표 (Markdown)</li>
+<li><b>2</b>일자별 태스크 + 관련 저장소/문서 경로. 승인 후 추가분은 "추가" 표시</li>
+<li><b>3</b>대표 승인·코멘트 (메일·카톡 요청)</li>
+<li><b>4</b>금요일 16:00 자동 주간보고 초안 → 기록자 보완 → 결재</li>
+</ol></div>
+</section>
+
+<!-- ===================== SC-07 ===================== -->
+<section class="screen" data-id="SC-07" data-title="일일진도·캘린더">
+<div class="desc"><b>SC-07 일일진도일정</b> — 계획 막대(연한색) vs 실적 막대(진한색), 노트 제출 캘린더. 수요일 기준 예시.</div>
+<div class="app">
+ <aside class="side" data-active="일일진도"></aside>
+ <div class="main">
+  <div class="bar"><div><div class="crumb">계획 › 일일진도</div><h2>W46 진도 — 계획 26h / 실적 13.5h · 완료율 46%</h2></div><div><span class="btn o">간트</span> <span class="btn o">매트릭스</span></div></div>
+  <div class="card ann" data-n="1"><h3>주간 간트 <span class="note">■ 계획 ■ 실적 ■ 지연</span></h3>
+   <div class="gantt">
+    <div class="h" style="text-align:left">태스크</div><div class="h">월 11-09</div><div class="h">화 11-10</div><div class="h">수 11-11</div><div class="h">목 11-12</div><div class="h">금 11-13</div>
+    <div>FC시트 N:1:N 매핑 수정 <b>80%</b></div><div><i class="gb p"></i><i class="gb a" style="right:20%"></i></div><div></div><div></div><div></div><div></div>
+    <div>Import 회귀테스트 <b class="warn">20%</b></div><div><i class="gb p"></i><i class="gb a late" style="right:75%"></i></div><div><i class="gb a late" style="right:40%"></i></div><div></div><div></div><div></div>
+    <div>FC_SHEET_RULE.md 갱신 <b class="ok">100%</b></div><div><i class="gb p"></i><i class="gb a"></i></div><div></div><div></div><div></div><div></div>
+    <div>빈 FC 셀 예외처리 <b class="ok">100%</b></div><div></div><div><i class="gb p"></i><i class="gb a"></i></div><div></div><div></div><div></div>
+    <div>FM명 NFKC 정규화 <b>50%</b></div><div></div><div><i class="gb p"></i><i class="gb a" style="right:50%"></i></div><div></div><div></div><div></div>
+    <div>넥센 샘플 전체 검증 <b>0%</b></div><div></div><div></div><div><i class="gb p"></i></div><div></div><div></div>
+    <div>Import 오류 리포트 화면</div><div></div><div></div><div></div><div><i class="gb p"></i></div><div></div>
+    <div>주간 정리·문서화</div><div></div><div></div><div></div><div></div><div><i class="gb p"></i></div>
+   </div></div>
+  <div class="grid2">
+   <div class="card ann" data-n="2"><h3>11월 노트 제출 캘린더 <span class="note">✔확인 ●제출 ✕미작성 −휴가</span></h3>
+    <div class="cal">
+     <div class="h">월</div><div class="h">화</div><div class="h">수</div><div class="h">목</div><div class="h">금</div><div class="h">토</div><div class="h">일</div>
+     <div class="off"></div><div class="off"></div><div class="off"></div><div class="off"></div><div class="off"></div><div class="off"><span class="d">1</span></div><div class="off"><span class="d">2</span></div>
+     <div><span class="d">3</span><div class="st ok">✔</div></div><div><span class="d">4</span><div class="st ok">✔</div></div><div><span class="d">5</span><div class="st ok">✔</div></div><div><span class="d">6</span><div class="st warn">●</div></div><div><span class="d">7</span><div class="st">−</div><div class="note" style="text-align:center">교육</div></div><div class="off"><span class="d">8</span></div><div class="off"><span class="d">9</span></div>
+     <div><span class="d">10</span><div class="st warn">●</div></div><div><span class="d">11</span><div class="st" style="color:#1d5fa8">✎</div></div><div><span class="d">12</span></div><div><span class="d">13</span></div><div><span class="d">14</span></div><div class="off"><span class="d">15</span></div><div class="off"><span class="d">16</span></div>
+    </div></div>
+   <div class="card ann" data-n="3"><h3>경고</h3>
+    <div class="alert">⚠ "Import 회귀테스트" 2회 이월 — 계획 재조정 필요</div>
+    <div class="alertr">✕ 미결재 2일 경과: p.0006 (확인자)</div>
+    <table><tr><th>일자</th><th>계획h</th><th>실적h</th><th>노트</th></tr>
+    <tr><td>11-09</td><td>6</td><td>5.5</td><td>p.0007</td></tr><tr><td>11-10</td><td>6</td><td>6.0</td><td>p.0008</td></tr><tr><td>11-11</td><td>5</td><td>2.0</td><td>작성 중</td></tr></table></div>
+  </div>
+ </div>
+</div>
+<div class="legend"><h4>설명</h4><ol>
+<li><b>1</b>노트의 진도 입력으로 자동 갱신. 지연은 주황</li>
+<li><b>2</b>제출 현황 캘린더 — 휴가·교육은 미작성 사유 등록</li>
+<li><b>3</b>이월 2회·미결재 경과 경고</li>
+</ol></div>
+</section>
+
+<!-- ===================== SC-08 ===================== -->
+<section class="screen" data-id="SC-08" data-title="연구노트 권 관리">
+<div class="desc"><b>SC-08 연구노트 권 관리 (표지·목차)</b> — 확인자·관리자. 표지 항목은 KOITA 교재 표지 양식 기준.</div>
+<div class="app">
+ <aside class="side" data-active="권 관리"></aside>
+ <div class="main">
+  <div class="bar"><div><div class="crumb">연구노트 권 관리</div><h2>AMP-RN-2026-001 <span class="pill p-sub">사용 중</span></h2></div><div><span class="btn o">PDF 전체 출력</span> <span class="btn r">권 마감</span></div></div>
+  <div class="grid3">
+   <div class="sheet ann" data-n="1" style="padding:12px"><div class="inner" style="min-height:420px;text-align:center">
+    <div style="margin-top:20px;font-size:20px;font-weight:bold;letter-spacing:6px;border:2px solid #222;display:inline-block;padding:4px 18px">연구노트</div>
+    <div style="font-size:11px;margin:6px 0 16px">㈜에이엠피시스템 연구전담부서</div>
+    <table style="font-size:11px;text-align:left"><tr><th>일련번호</th><td>AMP-RN-2026-001</td></tr><tr><th>과제명</th><td>Smart FMEA AI 자동화 고도화</td></tr><tr><th>계정번호</th><td class="bad">TODO_CONFIRM</td></tr><tr><th>권번호</th><td>1</td></tr><tr><th>기록자</th><td>이현우</td></tr><tr><th>작성기간</th><td>2026-11-03 ~ (사용 중)</td></tr><tr><th>소속</th><td>연구전담부서 · 사번 TODO · 041-…</td></tr><tr><th>보관장소</th><td>사내 서버 /srv/amp-rnote</td></tr><tr><th>보관책임자</th><td>신흥섭</td></tr></table>
+   </div></div>
+   <div class="sheet ann" data-n="2" style="padding:12px"><div class="inner" style="min-height:420px">
+    <div style="text-align:center;font-weight:bold;letter-spacing:4px">INDEX</div>
+    <table style="font-size:11px;margin-top:8px"><tr><th style="width:50px">PAGE</th><th>DESCRIPTION</th></tr>
+    <tr><td>0002</td><td>Import 파서 구조 분석 결과</td></tr><tr><td>0004</td><td>고장사슬 dedup key 설계 변경</td></tr><tr><td>0006</td><td>FM명 NFKC 정규화 효과 검증</td></tr><tr><td>0007</td><td>FC시트 N:1:N 매핑 구조 변경</td></tr></table></div></div>
+   <div>
+    <div class="card"><h3>권 정보</h3><table><tr><td>총 쪽수</td><td>7</td></tr><tr><td>확인완료</td><td>5</td></tr><tr><td>중요 노트</td><td>4</td></tr><tr><td>보존기간</td><td>30년 (설정)</td></tr><tr><td>무결성</td><td class="ok">✔ 전체 통과</td></tr></table></div>
+    <div class="card ann" data-n="3"><h3>권 마감 조건</h3><div style="font-size:12.5px;line-height:1.7">☐ 미결재 노트 0건 (현재 2)<br>☐ 과제 종료 또는 권 교체<br>마감 후 읽기전용 = "사용 후 연구노트"<br>폐기: 보존기간 경과 + 확인자 승인 + 폐기대장</div></div>
+    <div class="card"><h3>권 목록</h3><table><tr><th>일련번호</th><th>상태</th></tr><tr><td>AMP-RN-2026-001</td><td><span class="pill p-sub">사용 중</span></td></tr></table><span class="btn sm o">＋ 새 권</span></div>
+   </div>
+  </div>
+ </div>
+</div>
+<div class="legend"><h4>설명</h4><ol>
+<li><b>1</b>표지 — 일련번호·과제명·계정번호·권번호·기록자·기간·소속·보관 (R12)</li>
+<li><b>2</b>목차 — 중요 표시 노트 자동 등재 (R11)</li>
+<li><b>3</b>권 마감·보존·폐기 절차 (R14)</li>
+</ol></div>
+</section>
+
+<!-- ===================== SC-09 ===================== -->
+<section class="screen" data-id="SC-09" data-title="열람대장·감사로그">
+<div class="desc"><b>SC-09 열람대장 / 감사로그</b> — 관리자. 모든 조회·출력·수정·결재·로그인 기록. 삭제·수정 불가.</div>
+<div class="app">
+ <aside class="side" data-active="열람대장"></aside>
+ <div class="main">
+  <div class="bar"><div><div class="crumb">관리 › 열람대장</div><h2>열람대장 · 감사로그</h2></div><div><span class="btn o">엑셀 내보내기</span></div></div>
+  <div class="card ann" data-n="1" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+   <span class="note">기간</span><div class="in" style="min-height:28px;padding:4px 8px">2026-11-01 ~ 11-11</div>
+   <span class="note">행위</span><div class="in" style="min-height:28px;padding:4px 8px">전체 ▾</div>
+   <span class="note">사용자</span><div class="in" style="min-height:28px;padding:4px 8px">전체 ▾</div><span class="btn sm">조회</span>
+  </div>
+  <div class="card ann" data-n="2"><table>
+   <tr><th>일시(서버)</th><th>사용자</th><th>행위</th><th>대상</th><th>IP</th><th>상세</th></tr>
+   <tr><td>11-11 09:02:14</td><td>신흥섭</td><td><span class="pill p-sub">VIEW</span></td><td>p.0006</td><td>211.xx.xx.14</td><td>모바일 결재화면</td></tr>
+   <tr><td>11-10 17:55:03</td><td>이현우</td><td><span class="pill p-draft">SUBMIT</span></td><td>p.0008</td><td>10.0.0.21</td><td>Rev1 chain 5a1e…</td></tr>
+   <tr><td>11-10 11:30:47</td><td>신재민</td><td><span class="pill p-rev">EXPORT</span></td><td>AMP-RN-2026-001</td><td>10.0.0.33</td><td>PDF 전체 (7쪽)</td></tr>
+   <tr><td>11-07 10:12:09</td><td>이현우</td><td><span class="pill p-ret">REVISE</span></td><td>p.0006</td><td>10.0.0.21</td><td>Rev2 사유: 집계 오류 정정</td></tr>
+   <tr><td>11-07 09:30:22</td><td>신재민</td><td><span class="pill p-conf">APPROVE</span></td><td>p.0006</td><td>10.0.0.33</td><td>검토 승인</td></tr>
+   <tr><td>11-06 23:59:00</td><td>system</td><td><span class="pill p-ai">ANCHOR</span></td><td>2026-11-06</td><td>—</td><td>merkle 3c0f… ledger 8e21d0a</td></tr>
+   <tr><td>11-06 08:51:40</td><td>(외부)</td><td><span class="pill p-ret">LOGIN_FAIL</span></td><td>hwlee</td><td>58.xx.xx.7</td><td>비밀번호 오류 1/5</td></tr>
+  </table></div>
+ </div>
+</div>
+<div class="legend"><h4>설명</h4><ol>
+<li><b>1</b>기간·행위·사용자 필터</li>
+<li><b>2</b>VIEW 기록 = 열람대장 (R13). 테이블은 DB 트리거로 append-only</li>
+</ol></div>
+</section>
+
+<!-- ===================== SC-10 ===================== -->
+<section class="screen" data-id="SC-10" data-title="무결성 검증">
+<div class="desc"><b>SC-10 무결성 검증</b> — 관리자·점검 대응용. 위·변조 확인 기능(R3)을 눈으로 보여주는 화면.</div>
+<div class="app">
+ <aside class="side" data-active="무결성 검증"></aside>
+ <div class="main">
+  <div class="bar"><div><div class="crumb">관리 › 무결성 검증</div><h2>위·변조 검증</h2></div><div><span class="btn">전체 체인 검증 실행</span></div></div>
+  <div class="toast ann" data-n="1">✔ 2026-11-11 09:10 검증 완료 — Revision 9건 · 서명 17건 · 앵커 8일 모두 일치</div>
+  <div class="grid2">
+   <div class="card ann" data-n="2"><h3>Revision 해시체인</h3><table class="mono" style="font-size:11.5px">
+    <tr><th>노트</th><th>Rev</th><th>chainHash</th><th>서명</th><th>결과</th></tr>
+    <tr><td>p.0005</td><td>1</td><td>7d0e…41ab</td><td class="ok">✔</td><td class="ok">✔</td></tr>
+    <tr><td>p.0006</td><td>1</td><td>0c7d…b8d5</td><td class="ok">✔</td><td class="ok">✔</td></tr>
+    <tr><td>p.0006</td><td>2</td><td>91fa…20c3</td><td class="ok">✔</td><td class="ok">✔</td></tr>
+    <tr><td>p.0007</td><td>1</td><td>c2e8…7f19</td><td class="ok">✔</td><td class="ok">✔</td></tr>
+    <tr><td>p.0008</td><td>1</td><td>5a1e…9b02</td><td class="ok">✔</td><td class="ok">✔</td></tr></table></div>
+   <div class="card ann" data-n="3"><h3>일일 앵커 대조</h3><table class="mono" style="font-size:11.5px">
+    <tr><th>일자</th><th>머클루트</th><th>원장 커밋</th><th>대표 메일</th></tr>
+    <tr><td>11-10</td><td>a4b9…e2</td><td class="ok">✔ 1f3c2aa</td><td class="ok">✔</td></tr>
+    <tr><td>11-09</td><td>77c1…0d</td><td class="ok">✔ 9d02b71</td><td class="ok">✔</td></tr>
+    <tr><td>11-06</td><td>3c0f…8a</td><td class="ok">✔ 8e21d0a</td><td class="ok">✔</td></tr></table></div>
+  </div>
+  <div class="card ann" data-n="4"><h3>위·변조 감지 시 표시 예</h3>
+   <div class="alertr">✕ p.0006 Rev2 — 저장된 본문으로 계산한 contentHash가 기록값과 다름 (기록 91fa…20c3 / 계산 e07b…4c11). 이후 Revision 3건 체인 불일치. 원장 앵커 11-07과 대조 필요.</div>
+   <div class="note">개별 노트 검증 URL: rnote.ampbiz.co.kr/verify/note/{id} — PDF 하단 해시와 대조 가능</div></div>
+ </div>
+</div>
+<div class="legend"><h4>설명</h4><ol>
+<li><b>1</b>전체 검증 결과 요약 (CLI <code>npm run verify:chain</code>과 동일)</li>
+<li><b>2</b>Revision별 해시·서명 재계산 결과</li>
+<li><b>3</b>매일 23:59 앵커 — 원장 Git 커밋·대표 메일과 대조</li>
+<li><b>4</b>DB 직접 변조 시 빨간색 경고 (인수시험 T-04)</li>
+</ol></div>
+</section>
+
+<!-- ===================== SC-11 ===================== -->
+<section class="screen" data-id="SC-11" data-title="설정">
+<div class="desc"><b>SC-11 설정</b> — 관리자. 사용자·과제·저장소·알림·토큰. 빨간 TODO는 대표 확인 필요 항목.</div>
+<div class="app">
+ <aside class="side" data-active="설정"></aside>
+ <div class="main">
+  <div class="bar"><div><div class="crumb">관리 › 설정</div><h2>설정</h2></div></div>
+  <div class="tabs"><span class="on">사용자·결재선</span><span>과제·저장소</span><span>알림</span><span>개인 토큰</span><span>보존·백업</span></div>
+  <div class="grid2">
+   <div class="card ann" data-n="1"><h3>사용자·역할</h3><table>
+    <tr><th>성명</th><th>이메일</th><th>역할</th><th>GitHub</th><th>2FA</th></tr>
+    <tr><td>이현우</td><td>hwlee@ampbiz.co.kr</td><td>기록자</td><td class="bad">TODO</td><td class="ok">✔</td></tr>
+    <tr><td>신재민</td><td>shy5320@naver.com</td><td>검토자</td><td>—</td><td class="ok">✔</td></tr>
+    <tr><td>신흥섭</td><td>shs3647@daum.net</td><td>확인자·관리자</td><td>—</td><td class="ok">✔</td></tr></table>
+    <div style="margin-top:10px;font-size:12.5px"><b>결재선</b> 기록자 → 검토(신재민) → 확인(신흥섭) &nbsp; <span class="note">검토자 부재 시 확인자 대결 허용 ☑</span></div></div>
+   <div class="card ann" data-n="2"><h3>과제·저장소</h3>
+    <div class="f"><label>과제명</label><div class="in">Smart FMEA AI 자동화 고도화</div></div>
+    <div class="f"><label>과제번호/계정번호</label><div class="in bad">TODO_CONFIRM</div></div>
+    <div class="f"><label>연동 GitHub 저장소</label><div class="in mono">TODO/ampfmea &nbsp; ＋</div></div>
+    <div class="f"><label>Webhook URL</label><div class="in ro mono">https://rnote.ampbiz.co.kr/api/webhooks/github</div></div></div>
+   <div class="card ann" data-n="3"><h3>알림</h3><table>
+    <tr><th>시각</th><th>내용</th><th>메일</th><th>카톡</th></tr>
+    <tr><td>09:00</td><td>오늘 할 일 / 미결재</td><td>☑</td><td>☑</td></tr>
+    <tr><td>17:30</td><td>미제출 리마인드</td><td>☐</td><td>☑</td></tr>
+    <tr><td>18:30</td><td>미제출 → 신재민</td><td>☑</td><td>☑</td></tr>
+    <tr><td>즉시</td><td>결재요청·완료·반려</td><td>☑</td><td>☑</td></tr>
+    <tr><td>23:59</td><td>해시원장 → 대표</td><td>☑</td><td>☐</td></tr></table>
+    <div class="note">카카오 발송: <b class="warn">mock</b> (알림톡 대행사 계약 전) · SMTP: <b class="bad">TODO</b></div></div>
+   <div class="card ann" data-n="4"><h3>개인 토큰 (rn-push용)</h3>
+    <div class="in mono ro">rn_live_••••••••••••3f9a &nbsp; 발급 11-03 · 마지막 사용 11-10 16:03</div><br>
+    <span class="btn sm o">재발급</span> <span class="btn sm r">폐기</span>
+    <div class="note" style="margin-top:8px">설치: <span class="mono">git config --global alias.rnp '!bash ~/amp-rnote/scripts/rn-push.sh'</span></div></div>
+  </div>
+ </div>
+</div>
+<div class="legend"><h4>설명</h4><ol>
+<li><b>1</b>사용자·역할·결재선. 퇴사자는 비활성화만(기록 보존)</li>
+<li><b>2</b>과제·저장소·Webhook — 계정번호는 대표 확인</li>
+<li><b>3</b>알림 시각·채널 (기술문서 12.4)</li>
+<li><b>4</b>rn-push 스크립트용 개인 토큰</li>
+</ol></div>
+</section>
+
+</div>
+
+<script>
+const NAV=[["대시보드","SC-02",0],["연구노트","SC-03",0],["결재함","SC-05",2],["주간계획","SC-06",0],["일일진도","SC-07",0],["권 관리","SC-08",0],["열람대장","SC-09",0],["무결성 검증","SC-10",0],["설정","SC-11",0]];
+const screens=[...document.querySelectorAll('.screen')];
+const picker=document.getElementById('picker');
+function show(id){screens.forEach(s=>s.classList.toggle('on',s.dataset.id===id));[...picker.children].forEach(b=>b.classList.toggle('on',b.dataset.id===id));window.scrollTo({top:0});history.replaceState(null,'','#'+id)}
+screens.forEach(s=>{const b=document.createElement('button');b.dataset.id=s.dataset.id;b.textContent=s.dataset.id+' '+s.dataset.title;b.onclick=()=>show(s.dataset.id);picker.appendChild(b)});
+document.querySelectorAll('aside.side').forEach(a=>{const act=a.dataset.active;let h='<div class="logo">AMP RNote<span>연구전담부서 전자연구노트</span></div>';
+NAV.forEach(([n,id,c])=>{h+=`<a href="#${id}" class="${n===act?'on':''}" data-go="${id}"><span>${n}</span>${c?`<span class="cnt">${c}</span>`:''}</a>`});
+h+='<div class="me">이현우 · 기록자<br>로그아웃</div>';a.innerHTML=h});
+document.addEventListener('click',e=>{const g=e.target.closest('[data-go]');if(g){e.preventDefault();show(g.dataset.go)}});
+show((location.hash||'#SC-02').slice(1)||'SC-02');
+</script>
+</body>
+</html>

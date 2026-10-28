@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AMP 전자연구노트(RNote) 개발 기술문서 v1.0</title>
+<style>
+  :root{--navy:#1F4E79;--ink:#1d2433;--muted:#5b6475;--line:#d7dce5;--bg:#f6f8fb;--ok:#1e7b4a;--warn:#b25b00;--bad:#b42318;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",sans-serif;color:var(--ink);background:#fff;line-height:1.65;font-size:15px}
+  header{background:var(--navy);color:#fff;padding:32px 48px}
+  header h1{margin:0 0 6px;font-size:26px}
+  header p{margin:2px 0;opacity:.9;font-size:14px}
+  .wrap{display:grid;grid-template-columns:260px 1fr;max-width:1400px;margin:0 auto}
+  nav{position:sticky;top:0;align-self:start;height:100vh;overflow:auto;padding:20px 16px;border-right:1px solid var(--line);background:var(--bg);font-size:13.5px}
+  nav a{display:block;color:var(--ink);text-decoration:none;padding:3px 6px;border-radius:4px}
+  nav a:hover{background:#e6ecf5}
+  nav .sub{padding-left:18px;color:var(--muted)}
+  main{padding:28px 48px 80px;min-width:0}
+  h2{color:var(--navy);border-bottom:2px solid var(--navy);padding-bottom:6px;margin-top:44px;font-size:21px}
+  h3{color:var(--navy);margin-top:26px;font-size:17px}
+  table{border-collapse:collapse;width:100%;margin:10px 0 18px;font-size:13.5px}
+  th,td{border:1px solid var(--line);padding:7px 9px;vertical-align:top;text-align:left}
+  th{background:#eaf0f7;color:var(--navy);white-space:nowrap}
+  tr:nth-child(even) td{background:#fbfcfe}
+  code{font-family:Consolas,"D2Coding",monospace;background:#eef2f7;padding:1px 5px;border-radius:3px;font-size:13px}
+  pre{background:#0f1b2b;color:#e6edf6;padding:14px 16px;border-radius:6px;overflow:auto;font-size:12.8px;line-height:1.5}
+  pre code{background:none;padding:0;color:inherit}
+  .box{border:1px solid var(--line);border-left:5px solid var(--navy);background:var(--bg);padding:12px 16px;margin:14px 0;border-radius:4px}
+  .warn{border-left-color:var(--warn);background:#fff7ed}
+  .bad{border-left-color:var(--bad);background:#fef3f2}
+  .ok{border-left-color:var(--ok);background:#effaf3}
+  .tag{display:inline-block;font-size:11.5px;padding:1px 7px;border-radius:10px;font-weight:bold;margin-right:4px}
+  .t-must{background:#fde2e1;color:var(--bad)}
+  .t-ok{background:#dcf3e5;color:var(--ok)}
+  .t-chk{background:#fff0d9;color:var(--warn)}
+  .flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:12px 0}
+  .flow span{background:#eaf0f7;border:1px solid #b9c8dc;border-radius:5px;padding:6px 10px;font-size:13px}
+  .flow b{color:var(--navy)}
+  small.muted{color:var(--muted)}
+  @media print{nav{display:none}.wrap{display:block}main{padding:0 10mm}header{padding:12px 10mm}pre{white-space:pre-wrap}}
+</style>
+</head>
+<body>
+<header>
+  <h1>AMP 전자연구노트(RNote) 개발 기술문서</h1>
+  <p>㈜에이엠피시스템 연구전담부서 · 일일 전자연구노트 + 결재 + Git 연동 + Claude 평가 시스템</p>
+  <p>문서번호 RNOTE-SPEC-001 · 버전 v1.0 · 작성일 2026-10-28 · 요청 신흥섭 대표 · 개발 Claude Code</p>
+</header>
+
+<div class="wrap">
+<nav>
+  <a href="#s0"><b>0. Claude Code 작업 지시</b></a>
+  <a href="#s1">1. 목적·범위</a>
+  <a href="#s2">2. 정부기준 준수 매트릭스</a>
+  <a class="sub" href="#s2-1">2.1 법령·지침 근거</a>
+  <a class="sub" href="#s2-2">2.2 요건 → 구현</a>
+  <a href="#s3">3. 사용자·역할·결재선</a>
+  <a href="#s4">4. 전체 업무 흐름</a>
+  <a href="#s5">5. 연구노트 양식(필드)</a>
+  <a href="#s6">6. 기술 스택·서버</a>
+  <a href="#s7">7. 파일 경로 규칙</a>
+  <a href="#s8">8. DB 스키마(Prisma)</a>
+  <a href="#s9">9. 무결성·전자서명</a>
+  <a href="#s10">10. GitHub 푸시 연동</a>
+  <a class="sub" href="#s10-2">10.2 푸시 후 스크립트</a>
+  <a class="sub" href="#s10-3">10.3 GitHub Actions</a>
+  <a href="#s11">11. Claude 평가·다음할일</a>
+  <a href="#s12">12. 결재·메일·카톡 알림</a>
+  <a href="#s13">13. 주간계획·일일진도</a>
+  <a href="#s14">14. 화면 목록</a>
+  <a href="#s15">15. API 목록</a>
+  <a href="#s16">16. PDF 출력(표지·목차·속지)</a>
+  <a href="#s17">17. 보안·백업·보존</a>
+  <a href="#s18">18. 개발 일정(2주)</a>
+  <a href="#s19">19. 인수시험 체크리스트</a>
+  <a href="#s20">20. 대표 확인 필요 사항</a>
+  <a href="#s21">부록 A. CLAUDE.md 초안</a>
+  <a href="#s22">부록 B. 환경변수</a>
+</nav>
+
+<main>
+
+<!-- ============================================================ -->
+<h2 id="s0">0. Claude Code 작업 지시 (이 문서를 받은 Claude에게)</h2>
+<div class="box">
+<ol>
+  <li>이 문서를 저장소에 <code>docs/SPEC.html</code>로 저장하고, 부록 A를 <code>CLAUDE.md</code>로 만든 뒤 작업을 시작한다.</li>
+  <li><b>18장 개발 일정</b>의 Day 단위로만 진행한다. 하루 작업이 끝날 때마다 19장의 해당 체크 항목을 통과시키고 커밋한다.</li>
+  <li><b>2장 정부기준 매트릭스의 <span class="tag t-must">필수</span> 항목은 어떤 경우에도 생략·단순화하지 않는다.</b> 특히 ① 서버시각 자동기록 ② 수정 시 원본 보존(삭제 금지) ③ 해시체인 위·변조 검증 ④ 기록자·확인자 서명.</li>
+  <li>금액·외부 유료서비스(카카오 알림톡 대행사, 인증서 연동) 계약이 필요한 부분은 인터페이스와 Mock 구현까지만 하고 20장 목록에 남긴다.</li>
+  <li>모르는 값(도메인, 과제번호 등)은 지어내지 말고 <code>.env</code> / 시드 파일의 <code>TODO_CONFIRM</code>으로 둔다.</li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s1">1. 목적·범위</h2>
+<table>
+<tr><th>목적</th><td>연구전담부서 연구원(이현우)이 <b>매일</b> 연구개발 활동을 정부 기준에 맞는 전자연구노트로 기록·결재·보존하여, 정부지원금(국가R&amp;D 과제, 연구인력개발비 세액공제, 창업보육·바우처 등) 수행·정산·실태점검 시 <b>연구활동 증빙</b>으로 제출할 수 있게 한다.</td></tr>
+<tr><th>시스템명</th><td>AMP RNote (전자연구노트) — 사내 서버 설치형 웹앱</td></tr>
+<tr><th>1차 범위</th><td>일일 연구노트 작성 · 수정이력 · 해시체인 · 결재(기록→검토→확인) · 자동메일/카톡 알림 · GitHub 푸시 자동수집 · 관련 파일경로 기록 · Claude 평가/다음할일 · 피드백 · 주간계획 · 일일진도 · PDF(표지·목차·속지) · 열람대장 · 백업</td></tr>
+<tr><th>범위 외(2차)</th><td>공인 전자서명인증사업자 인증서 연동(9.3), RFC 3161 외부 시점확인(TSA) 상용 연동, 다과제·다연구원 확장 UI</td></tr>
+<tr><th>사용자 규모</th><td>초기 3명(기록자 1, 검토자 1, 확인자 1) — 연구원 추가 가능 구조로 설계</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="s2">2. 정부기준 준수 매트릭스</h2>
+
+<h3 id="s2-1">2.1 근거 법령·지침</h3>
+<table>
+<tr><th>구분</th><th>근거</th><th>시스템 반영</th></tr>
+<tr><td>국가R&amp;D</td><td>「국가연구개발혁신법」 및 과기정통부 「국가연구개발사업 연구노트 지침」</td><td>전자연구노트 3대 요건(전자서명인증, 입력일시 자동기록, 위·변조 확인), 기재사항, 보존·열람·폐기</td></tr>
+<tr><td>연구소/전담부서</td><td>「기업부설연구소등의 연구개발 지원에 관한 법률」(2026.2.1 시행) 및 시행령·시행규칙</td><td>연구전담요원·연구활동 증빙 자료로 활용 (연구노트 자체가 인정요건인지는 <span class="tag t-chk">확인</span>)</td></tr>
+<tr><td>기관 자체규정</td><td>지침상 연구기관의 장은 연구노트 작성·관리 자체규정을 정하고 교육해야 함</td><td><code>docs/compliance/연구노트관리규정.md</code> 초안을 시스템과 함께 산출 (Day 10)</td></tr>
+<tr><td>작성 실무</td><td>KOITA 「기업부설연구소 운영 필수사항 설명회」 교재 — 연구노트 작성방법(기본/추가 기재사항, 표지·속지·목차)</td><td>5장 양식, 16장 PDF 레이아웃</td></tr>
+</table>
+<div class="box warn"><b>주의:</b> 지침 원문(최신 개정본)은 개발 착수 전 대표가 전담기관 또는 법제처에서 최종 확인한다. 본 문서는 대학·연구기관 규정에 반영된 지침 내용을 기준으로 작성했다.</div>
+
+<h3 id="s2-2">2.2 요건 → 구현 매핑</h3>
+<table>
+<tr><th>#</th><th>정부·실무 요건</th><th>등급</th><th>구현 방법</th><th>검증(19장)</th></tr>
+<tr><td>R1</td><td>기록자의 전자서명인증 기능</td><td><span class="tag t-must">필수</span></td><td>사용자별 Ed25519 서명키 + 서명 PIN + TOTP 2단계 로그인. 제출 시 노트 해시에 전자서명. 2차: 공인 인증서 연동(9.3)</td><td>T-03</td></tr>
+<tr><td>R2</td><td>연구기록 입력일·시간 자동기록</td><td><span class="tag t-must">필수</span></td><td>모든 시각은 DB 서버시각(<code>now()</code>)만 사용, 클라이언트 시각 입력 불가. 작성일자 = 서버 기준 KST 날짜. 서버 NTP 동기화</td><td>T-01</td></tr>
+<tr><td>R3</td><td>기록의 위·변조 확인 기능</td><td><span class="tag t-must">필수</span></td><td>SHA-256 해시체인 + 일일 머클루트 앵커링(별도 Git 저장소 커밋 + 대표 메일 발송). 검증 화면 제공</td><td>T-04, T-05</td></tr>
+<tr><td>R4</td><td>수정 시 영구적으로 남는 수정표시</td><td><span class="tag t-must">필수</span></td><td>UPDATE/DELETE 금지(append-only). 수정은 새 Revision + 수정사유 필수. 화면·PDF에 취소선/수정표시</td><td>T-02</td></tr>
+<tr><td>R5</td><td>기록자·확인자 서명 및 날짜</td><td><span class="tag t-must">필수</span></td><td>결재선: 기록자(이현우) → 검토(신재민) → 확인자(신흥섭). 각 단계 서명·일시 저장. 속지 하단 서명란 출력</td><td>T-06</td></tr>
+<tr><td>R6</td><td>연구개발기관명·일련번호·과제명·쪽번호</td><td><span class="tag t-must">필수</span></td><td>권(Notebook) 일련번호 <code>AMP-RN-YYYY-NNN</code>, 쪽번호 연속 자동부여(누락·중복 불가, DB unique), 과제명·계정번호 표지 출력</td><td>T-07</td></tr>
+<tr><td>R7</td><td>기본 기재사항 (과제명, 작성일자, 실험명, 목적, 방법, 결과, 서명/일자)</td><td><span class="tag t-must">필수</span></td><td>필수 필드 미입력 시 제출 불가</td><td>T-08</td></tr>
+<tr><td>R8</td><td>추가 기재사항 (참고문헌, 측정·획득조건, 특이/예상외 결과, 표준절차 참조·수정, 새 가설, 요인 관계, 해석·평가·결론, 실패 데이터)</td><td><span class="tag t-ok">권장</span></td><td>선택 필드로 제공, 해당 시 입력. "실패 데이터도 반드시 기재" 안내 문구 상시 표시</td><td>—</td></tr>
+<tr><td>R9</td><td>사실이 아닌 의견은 기록하지 말 것 / 연구노트는 업무수첩이 아님</td><td><span class="tag t-must">필수</span></td><td><b>Claude 평가·피드백은 노트 본문과 분리 저장·표시</b>("AI 평가(참고) — 연구노트 본문 아님"). AI 초안은 기록자가 섹션별 "사실 확인" 체크 후에만 본문 반영</td><td>T-09</td></tr>
+<tr><td>R10</td><td>직접 기입 불가 자료(사진·데이터·출력물) 첨부</td><td><span class="tag t-must">필수</span></td><td>첨부파일 SHA-256 기록, 노트 해시에 포함. 관련 파일경로(md 등) 필수 기록</td><td>T-10</td></tr>
+<tr><td>R11</td><td>목차(중요 페이지·내용 요약)</td><td><span class="tag t-ok">권장</span></td><td>"중요" 표시 노트 → 권별 목차 자동 생성(PAGE / DESCRIPTION)</td><td>T-11</td></tr>
+<tr><td>R12</td><td>표지 (일련번호, 과제명·계정번호, 권번호, 기록자, 작성기간, 소속·사번·전화, 보관장소·책임자)</td><td><span class="tag t-must">필수</span></td><td>Notebook 메타데이터 → PDF 표지</td><td>T-11</td></tr>
+<tr><td>R13</td><td>열람 통제·외부 비공개·열람대장</td><td><span class="tag t-must">필수</span></td><td>역할 기반 권한, 모든 조회를 AuditLog(VIEW)로 기록 → 열람대장 화면</td><td>T-12</td></tr>
+<tr><td>R14</td><td>보존(사용 후 연구노트 이관·장기보존)·폐기 절차</td><td><span class="tag t-must">필수</span></td><td>과제 종료 시 권 마감(CLOSED) → 읽기전용. 보존기간 기본 30년(설정값), 폐기는 대표 승인 + 폐기대장. 일일 암호화 백업</td><td>T-13</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="s3">3. 사용자·역할·결재선</h2>
+<table>
+<tr><th>역할</th><th>성명</th><th>이메일(알림 수신)</th><th>권한</th></tr>
+<tr><td>기록자 (RECORDER)</td><td>이현우 대리</td><td>hwlee@ampbiz.co.kr</td><td>노트 작성·제출·수정(Revision), 주간계획 작성, 본인 노트 열람</td></tr>
+<tr><td>검토자 (REVIEWER)</td><td>신재민 대리</td><td>shy5320@naver.com</td><td>검토 승인/반려, 피드백 작성, 전체 열람</td></tr>
+<tr><td>확인자 (CONFIRMER)</td><td>신흥섭 대표 (연구전담부서장 가정)</td><td>shs3647@daum.net</td><td>최종 확인(서명·잠금), 반려, 피드백, 권 마감·폐기 승인</td></tr>
+<tr><td>관리자 (ADMIN)</td><td>신흥섭 대표</td><td>—</td><td>사용자·과제·알림 설정, 감사로그·무결성 검증</td></tr>
+</table>
+<div class="box warn">확인자는 지침상 연구책임자 또는 기관이 지정한 자여야 한다. 연구전담부서장 지정 현황은 <b>20장 확인 사항</b>.</div>
+
+<!-- ============================================================ -->
+<h2 id="s4">4. 전체 업무 흐름 (하루)</h2>
+<div class="flow">
+  <span><b>09:00</b> 오늘 할 일 확인<br><small>주간계획·어제 다음할일</small></span>→
+  <span><b>개발</b><br><small>Claude Code 사용</small></span>→
+  <span><b>git push</b><br><small>rn-push.sh</small></span>→
+  <span><b>자동수집</b><br><small>커밋·변경파일·md 경로</small></span>→
+  <span><b>노트 초안</b><br><small>Claude 초안 + 기록자 사실확인</small></span>→
+  <span><b>17:30~18:00 제출</b><br><small>기록자 전자서명</small></span>→
+  <span><b>Claude 평가</b><br><small>평가·다음할일(별도)</small></span>→
+  <span><b>검토</b> 신재민<br><small>메일+카톡</small></span>→
+  <span><b>확인</b> 신흥섭<br><small>메일+카톡, 잠금</small></span>→
+  <span><b>23:59 앵커링</b><br><small>해시 원장 커밋·메일</small></span>
+</div>
+<table>
+<tr><th>상태(NoteStatus)</th><th>의미</th><th>전이 조건</th></tr>
+<tr><td><code>DRAFT</code></td><td>작성 중 (자동저장, 이력 미생성)</td><td>기록자 제출 → SUBMITTED</td></tr>
+<tr><td><code>SUBMITTED</code></td><td>기록자 서명 완료, 검토 대기 — <b>이 시점부터 수정은 Revision</b></td><td>검토 승인 → REVIEWED / 반려 → RETURNED</td></tr>
+<tr><td><code>REVIEWED</code></td><td>검토 완료, 확인 대기</td><td>확인 → CONFIRMED / 반려 → RETURNED</td></tr>
+<tr><td><code>RETURNED</code></td><td>반려 (사유·피드백 첨부)</td><td>기록자 보완(Revision+사유) 후 재제출 → SUBMITTED</td></tr>
+<tr><td><code>CONFIRMED</code></td><td>확인자 서명, 잠금 — 이후 수정은 "정정 Revision"만(사유·확인자 재서명 필요)</td><td>—</td></tr>
+</table>
+<p><small class="muted">휴일·연차: 해당 일자는 "미작성 사유(휴가/교육/외근)" 1줄 등록으로 쪽번호 없이 일지에만 표시 — 미작성 알림 제외.</small></p>
+
+<!-- ============================================================ -->
+<h2 id="s5">5. 연구노트 양식 (일일 노트 필드)</h2>
+<table>
+<tr><th>섹션</th><th>필드 (키)</th><th>필수</th><th>입력 방식 / 비고</th></tr>
+<tr><td rowspan="4">머리</td><td>과제명·계정번호 (<code>project</code>)</td><td>●</td><td>권 선택 시 자동</td></tr>
+<tr><td>권번호·쪽번호 (<code>notebookSerial</code>, <code>pageNo</code>)</td><td>●</td><td>자동, 수정 불가</td></tr>
+<tr><td>작성일자 (<code>noteDate</code>), 최초입력·제출 시각</td><td>●</td><td>서버시각 자동</td></tr>
+<tr><td>실험명/제목 (<code>title</code>)</td><td>●</td><td>예: "PFMEA Import 파서 FC시트 N:1:N 매핑 수정"</td></tr>
+<tr><td rowspan="4">본문<br>(기본)</td><td>목적 (<code>purpose</code>)</td><td>●</td><td>오늘 연구의 목적·가설</td></tr>
+<tr><td>방법/과정 (<code>method</code>)</td><td>●</td><td>재현 가능하게: 사용 도구·명령·환경·테스트 데이터</td></tr>
+<tr><td>결과 (<code>result</code>)</td><td>●</td><td>성공/실패 모두. 수치·로그·스크린샷 첨부</td></tr>
+<tr><td>해석·결론 (<code>discussion</code>)</td><td>●</td><td>결과 해석, 실패 원인, 선택하지 않은 방안과 사유</td></tr>
+<tr><td rowspan="2">자동 수집</td><td>Git 커밋 목록 (<code>commits</code>)</td><td>◐</td><td>당일 푸시 커밋 자동 연결 (커밋 없는 날은 "커밋 없음 사유")</td></tr>
+<tr><td><b>관련 파일 경로 (<code>fileRefs</code>)</b></td><td>●</td><td><b>필수 1건 이상.</b> git diff 자동 + 수동 추가. md 문서(<code>*.md</code>), 설계서, 테스트 데이터 경로를 저장소 기준 상대경로로 기록. 예: <code>docs/import/FC_SHEET_RULE.md</code> (M), <code>src/lib/excel-parser.ts</code> (M)</td></tr>
+<tr><td rowspan="6">본문<br>(추가)</td><td>참고문헌·자료 (<code>references</code>)</td><td>○</td><td>문서·URL·표준 조항</td></tr>
+<tr><td>측정방법·획득조건 (<code>measurement</code>)</td><td>○</td><td>성능 측정 조건, 데이터 출처</td></tr>
+<tr><td>특이사항·예상외 결과 (<code>unexpected</code>)</td><td>○</td><td>버그 재현 조건 등</td></tr>
+<tr><td>표준절차 참조·수정 (<code>procedureRef</code>)</td><td>○</td><td>코딩 규칙·CLAUDE.md·스킬 변경 내역</td></tr>
+<tr><td>새 가설·발상·개념 (<code>ideas</code>)</td><td>○</td><td>발명 착상 → 특허 검토 표시(<code>ipCandidate</code> 체크)</td></tr>
+<tr><td>실패 데이터 (<code>failedData</code>)</td><td>○</td><td>"실패로 간주되는 데이터도 반드시 기재" 안내</td></tr>
+<tr><td rowspan="3">계획</td><td>오늘 진도 (<code>taskProgress[]</code>)</td><td>●</td><td>주간계획의 오늘 태스크별 진척률(%)·실제 시간</td></tr>
+<tr><td>다음 계획 (<code>nextPlan</code>)</td><td>●</td><td>내일 할 일 — 다음날 대시보드에 자동 표시</td></tr>
+<tr><td>중요 표시·목차 설명 (<code>important</code>, <code>indexDesc</code>)</td><td>○</td><td>목차 자동 등재</td></tr>
+<tr><td rowspan="3">본문과 분리</td><td>Claude 평가 결과 (<code>AiEvaluation</code>)</td><td>자동</td><td>"AI 평가(참고) — 연구노트 본문 아님" 라벨. 노트 해시에 포함하지 않음(별도 해시)</td></tr>
+<tr><td>Claude 다음할일 제안</td><td>자동</td><td>기록자가 채택 시 <code>nextPlan</code>에 본인이 옮겨 적음</td></tr>
+<tr><td>피드백 (<code>Feedback</code>)</td><td>—</td><td>검토자·확인자 코멘트, 조치완료 처리 → 다음 노트에 "피드백 조치" 연결</td></tr>
+<tr><td>꼬리</td><td>서명란</td><td>●</td><td>기록자/검토자/확인자 성명·서명·일시</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="s6">6. 기술 스택·서버</h2>
+<table>
+<tr><th>계층</th><th>선택</th><th>비고</th></tr>
+<tr><td>프레임워크</td><td>Next.js 14 (App Router) + TypeScript</td><td>Smart FMEA와 동일 스택</td></tr>
+<tr><td>DB</td><td>PostgreSQL 16 + Prisma</td><td>DB 계정 분리: 앱 계정은 <code>note_revision</code>, <code>audit_log</code>, <code>hash_anchor</code>에 UPDATE/DELETE 권한 없음</td></tr>
+<tr><td>인증</td><td>NextAuth(Credentials) + TOTP(otplib)</td><td>세션 8시간, 비밀번호 argon2id</td></tr>
+<tr><td>서명</td><td>Node <code>crypto</code> Ed25519</td><td>개인키는 서명PIN 기반 키(argon2id)로 AES-256-GCM 암호화 저장</td></tr>
+<tr><td>UI</td><td>Tailwind + shadcn/ui, 에디터 Tiptap(마크다운 저장)</td><td>본문은 Markdown으로 저장 → md 내보내기 용이</td></tr>
+<tr><td>스케줄러</td><td>node-cron (별도 worker 프로세스)</td><td>알림·앵커링·백업</td></tr>
+<tr><td>메일</td><td>Nodemailer (SMTP)</td><td>발신 계정 <span class="tag t-chk">확인</span></td></tr>
+<tr><td>카톡</td><td>카카오 알림톡 (발송대행 API — 솔라피 등) + SMS 대체발송</td><td>카카오톡 채널·템플릿 심사 필요. 개발 시 Mock</td></tr>
+<tr><td>AI</td><td>Anthropic Messages API (<code>@anthropic-ai/sdk</code>)</td><td>모델은 env <code>ANTHROPIC_MODEL</code> (기본 <code>claude-sonnet-5-5</code>)</td></tr>
+<tr><td>PDF</td><td>Playwright(Chromium) HTML→PDF</td><td>A4, 속지 테두리·쪽번호</td></tr>
+<tr><td>배포</td><td>사내 서버 Docker Compose (app, worker, postgres) + Nginx + Let's Encrypt + PM2 미사용</td><td>도메인 예: <code>rnote.ampbiz.co.kr</code> <span class="tag t-chk">확인</span></td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="s7">7. 파일 경로 규칙 (반드시 준수)</h2>
+<h3>7.1 앱 저장소 구조 — <code>amp-rnote/</code></h3>
+<pre><code>amp-rnote/
+├─ CLAUDE.md                         # 부록 A (Claude Code 작업 규칙)
+├─ docs/
+│  ├─ SPEC.html                      # 본 문서
+│  ├─ PROGRESS.md                    # 일별 개발 진도 (Day1~10, 매 커밋 갱신)
+│  ├─ DECISIONS.md                   # 설계 결정·변경 이력
+│  └─ compliance/
+│     ├─ 연구노트관리규정.md          # 기관 자체규정 초안
+│     └─ 준수매트릭스.md              # 2.2장 R1~R14 검증 결과
+├─ prisma/
+│  ├─ schema.prisma
+│  ├─ seed.ts                        # 사용자 3명, 과제·권 TODO_CONFIRM
+│  └─ sql/immutable_grants.sql       # UPDATE/DELETE 권한 회수 SQL
+├─ src/
+│  ├─ app/(auth)/login/
+│  ├─ app/dashboard/
+│  ├─ app/notes/[id]/                # 작성·상세·속지보기
+│  ├─ app/approvals/                 # 결재함
+│  ├─ app/plans/weekly/  app/plans/daily/
+│  ├─ app/notebooks/[id]/            # 표지·목차·마감
+│  ├─ app/audit/  app/verify/        # 열람대장·무결성검증
+│  ├─ app/api/...                    # 15장
+│  ├─ lib/hash.ts  lib/sign.ts  lib/chain.ts
+│  ├─ lib/github.ts  lib/claude.ts  lib/notify/{mail,kakao}.ts
+│  ├─ lib/pdf/{cover,index,page}.tsx
+│  └─ worker/cron.ts                 # 스케줄 작업
+├─ scripts/
+│  ├─ rn-push.sh                     # 푸시 후 스크립트 (10.2)
+│  ├─ rn-push.ps1                    # Windows 노트북용
+│  ├─ backup.sh  restore-test.sh
+│  └─ verify-chain.ts                # CLI 무결성 검증
+├─ .github/workflows/research-note.yml   # 10.3
+├─ docker-compose.yml  Dockerfile  nginx/rnote.conf
+└─ .env.example                      # 부록 B</code></pre>
+
+<h3>7.2 서버 경로</h3>
+<table>
+<tr><th>용도</th><th>경로</th></tr>
+<tr><td>앱 설치</td><td><code>/srv/amp-rnote/app</code></td></tr>
+<tr><td>첨부파일 원본 (해시명 저장)</td><td><code>/srv/amp-rnote/storage/attachments/YYYY/MM/&lt;sha256&gt;.&lt;ext&gt;</code></td></tr>
+<tr><td>확정 노트 PDF</td><td><code>/srv/amp-rnote/storage/pdf/&lt;권일련번호&gt;/p&lt;쪽4자리&gt;_YYYY-MM-DD.pdf</code></td></tr>
+<tr><td>확정 노트 Markdown 원장 (Git)</td><td><code>/srv/amp-rnote/ledger/notes/YYYY/MM/&lt;권일련번호&gt;_p&lt;쪽&gt;_YYYY-MM-DD.md</code></td></tr>
+<tr><td>일일 해시 앵커</td><td><code>/srv/amp-rnote/ledger/anchors/YYYY/YYYY-MM-DD.json</code></td></tr>
+<tr><td>백업</td><td><code>/srv/amp-rnote/backup/daily/</code> → 외부 저장소 동기화 <span class="tag t-chk">확인</span></td></tr>
+<tr><td>로그</td><td><code>/srv/amp-rnote/logs/{app,worker,notify}.log</code></td></tr>
+</table>
+<p>예) <code>/srv/amp-rnote/ledger/notes/2026/11/AMP-RN-2026-001_p0007_2026-11-09.md</code> — 파일명은 권번호부터 시작해 첫 글자부터 식별되게 한다.</p>
+
+<h3>7.3 노트 안의 파일경로 기록 규칙</h3>
+<ul>
+  <li>모든 노트는 <code>fileRefs</code> 1건 이상 필수 — 제출 시 검증.</li>
+  <li>형식: <code>&lt;저장소명&gt;:&lt;상대경로&gt;</code> + 변경유형(A추가/M수정/D삭제/R참조) + 커밋 SHA(앞 7자리). 예: <code>ampfmea:docs/import/FC_SHEET_RULE.md (M, a1b2c3d)</code></li>
+  <li><b>md 문서는 별도 강조 표시</b>(<code>isDoc=true</code>): <code>*.md, *.mdx, CLAUDE.md, SKILL.md, docs/**</code> — 목차·주간보고에 "작성/수정 문서" 목록으로 집계.</li>
+  <li>저장소 밖 자료(엑셀 테스트데이터 등)는 첨부 업로드 후 서버 경로 자동 기록.</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="s8">8. DB 스키마 (Prisma 초안)</h2>
+<pre><code>enum Role       { RECORDER REVIEWER CONFIRMER ADMIN }
+enum NoteStatus { DRAFT SUBMITTED REVIEWED RETURNED CONFIRMED }
+enum ApprStep   { RECORD REVIEW CONFIRM }
+enum ApprState  { PENDING APPROVED REJECTED }
+enum Channel    { EMAIL KAKAO SMS }
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String?
+  empNo        String?                    // 사번 (표지)
+  dept         String   @default("연구전담부서")
+  roles        Role[]
+  githubLogin  String?  @unique           // 커밋 작성자 매핑
+  passwordHash String
+  totpSecret   String?
+  signPubKey   String?                    // Ed25519 공개키 (PEM)
+  signPrivEnc  String?                    // 암호화된 개인키
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+}
+
+model Project {                           // 연구개발과제
+  id        String   @id @default(cuid())
+  code      String   @unique              // 과제번호/계정번호 (TODO_CONFIRM)
+  name      String
+  startDate DateTime @db.Date
+  endDate   DateTime? @db.Date
+  repos     String[]                      // 연동 GitHub 저장소 "owner/repo"
+  notebooks Notebook[]
+}
+
+model Notebook {                          // 권
+  id          String   @id @default(cuid())
+  serialNo    String   @unique            // AMP-RN-2026-001
+  projectId   String
+  volumeNo    Int                         // 과제 내 권번호
+  recorderId  String
+  openedAt    DateTime @default(now())
+  closedAt    DateTime?                   // 마감 = 사용 후 연구노트
+  storagePlace String?                    // 보관장소
+  custodianId  String?                    // 보관책임자
+  retentionYears Int @default(30)
+  notes       Note[]
+  @@unique([projectId, volumeNo])
+}
+
+model Note {
+  id          String     @id @default(cuid())
+  notebookId  String
+  pageNo      Int                         // 연속 쪽번호
+  recorderId  String
+  noteDate    DateTime   @db.Date         // 서버 KST 날짜
+  status      NoteStatus @default(DRAFT)
+  important   Boolean    @default(false)
+  indexDesc   String?
+  currentRev  Int        @default(0)
+  createdAt   DateTime   @default(now())  // 최초 입력 (서버)
+  submittedAt DateTime?
+  confirmedAt DateTime?
+  revisions   NoteRevision[]
+  fileRefs    FileRef[]
+  attachments Attachment[]
+  commits     GitCommit[]
+  approvals   Approval[]
+  aiEvals     AiEvaluation[]
+  feedbacks   Feedback[]
+  @@unique([notebookId, pageNo])
+  @@unique([recorderId, noteDate])
+}
+
+model NoteDraft {                         // 제출 전 자동저장 (덮어쓰기 허용)
+  noteId    String @id
+  body      Json
+  updatedAt DateTime @updatedAt
+}
+
+model NoteRevision {                      // APPEND-ONLY
+  id          String   @id @default(cuid())
+  noteId      String
+  revNo       Int
+  body        Json                        // 5장 필드 전체 (Markdown)
+  changeReason String?                    // rev ≥ 2 필수
+  editorId    String
+  createdAt   DateTime @default(now())
+  contentHash String                      // sha256(canonical(body+fileRefs+attachHashes))
+  prevChainHash String
+  chainHash   String   @unique            // sha256(prevChainHash|contentHash|createdAt|revNo)
+  signature   String?                     // 기록자 Ed25519 서명(chainHash)
+  @@unique([noteId, revNo])
+}
+
+model FileRef {
+  id         String  @id @default(cuid())
+  noteId     String
+  repo       String?                      // ampfmea 등, 첨부면 null
+  path       String
+  changeType String                       // A|M|D|R
+  commitSha  String?
+  isDoc      Boolean @default(false)      // md 등 문서
+  source     String                       // GIT|MANUAL|ATTACHMENT
+}
+
+model Attachment {
+  id        String @id @default(cuid())
+  noteId    String
+  fileName  String
+  mime      String
+  size      Int
+  sha256    String
+  storagePath String
+  uploadedAt DateTime @default(now())
+}
+
+model GitCommit {
+  sha        String   @id
+  repo       String
+  branch     String
+  authorLogin String
+  message    String
+  committedAt DateTime
+  pushedAt   DateTime                     // webhook 수신 서버시각
+  additions  Int
+  deletions  Int
+  files      Json                         // [{path,status,additions,deletions}]
+  noteId     String?
+}
+
+model Approval {
+  id         String    @id @default(cuid())
+  noteId     String
+  revNo      Int                          // 어떤 Revision에 대한 결재인지
+  step       ApprStep
+  approverId String
+  state      ApprState @default(PENDING)
+  comment    String?
+  signedHash String?                      // 결재 대상 chainHash
+  signature  String?
+  actedAt    DateTime?
+}
+
+model AiEvaluation {                      // 본문과 분리
+  id          String   @id @default(cuid())
+  noteId      String
+  revNo       Int
+  model       String
+  promptVer   String
+  result      Json                        // 11.2 스키마
+  inputHash   String
+  outputHash  String
+  createdAt   DateTime @default(now())
+}
+
+model Feedback {
+  id        String   @id @default(cuid())
+  noteId    String
+  authorId  String
+  body      String
+  createdAt DateTime @default(now())
+  resolvedAt DateTime?
+  resolvedInNoteId String?                // 조치한 노트
+}
+
+model WeeklyPlan {
+  id         String   @id @default(cuid())
+  userId     String
+  projectId  String
+  weekStart  DateTime @db.Date            // 월요일
+  goals      String                       // Markdown
+  status     String   @default("DRAFT")   // DRAFT|SUBMITTED|APPROVED
+  approvedById String?
+  report     String?                      // 금요일 주간보고(자동 생성+수정)
+  tasks      DailyTask[]
+  @@unique([userId, weekStart])
+}
+
+model DailyTask {
+  id           String  @id @default(cuid())
+  weeklyPlanId String
+  planDate     DateTime @db.Date
+  title        String
+  plannedHours Float
+  actualHours  Float?
+  progress     Int     @default(0)        // %
+  status       String  @default("TODO")   // TODO|DOING|DONE|DELAYED|CARRIED
+  noteId       String?
+  carriedFromId String?                   // 이월 원본
+}
+
+model Absence { id String @id @default(cuid()); userId String; date DateTime @db.Date; reason String }
+
+model AuditLog {                          // APPEND-ONLY (열람대장 포함)
+  id        BigInt   @id @default(autoincrement())
+  actorId   String?
+  action    String                        // VIEW|CREATE|REVISE|SUBMIT|APPROVE|REJECT|EXPORT|LOGIN|...
+  entity    String
+  entityId  String
+  ip        String?
+  userAgent String?
+  detail    Json?
+  at        DateTime @default(now())
+}
+
+model HashAnchor {                        // APPEND-ONLY
+  date        DateTime @id @db.Date
+  merkleRoot  String
+  revisionCount Int
+  ledgerCommit String?                    // ledger 저장소 커밋 SHA
+  tsaToken    Bytes?                      // 2차: RFC3161
+  mailedAt    DateTime?
+}
+
+model Notification {
+  id       String   @id @default(cuid())
+  channel  Channel
+  to       String
+  template String
+  payload  Json
+  status   String   @default("QUEUED")    // QUEUED|SENT|FAILED
+  error    String?
+  sentAt   DateTime?
+  createdAt DateTime @default(now())
+}</code></pre>
+<p><b>DB 레벨 불변성</b> (<code>prisma/sql/immutable_grants.sql</code>):</p>
+<pre><code>REVOKE UPDATE, DELETE ON "NoteRevision", "AuditLog", "HashAnchor" FROM rnote_app;
+CREATE OR REPLACE FUNCTION forbid_change() RETURNS trigger AS $$
+BEGIN RAISE EXCEPTION 'append-only table: %', TG_TABLE_NAME; END $$ LANGUAGE plpgsql;
+CREATE TRIGGER t_rev_lock   BEFORE UPDATE OR DELETE ON "NoteRevision" FOR EACH ROW EXECUTE FUNCTION forbid_change();
+CREATE TRIGGER t_audit_lock BEFORE UPDATE OR DELETE ON "AuditLog"     FOR EACH ROW EXECUTE FUNCTION forbid_change();
+CREATE TRIGGER t_anchor_lock BEFORE UPDATE OR DELETE ON "HashAnchor"  FOR EACH ROW EXECUTE FUNCTION forbid_change();
+-- Note 테이블 pageNo/noteDate/createdAt 변경 금지 트리거도 추가</code></pre>
+
+<!-- ============================================================ -->
+<h2 id="s9">9. 무결성·전자서명</h2>
+<h3>9.1 해시체인</h3>
+<pre><code>contentHash = SHA256( canonicalJSON({ body, fileRefs(sorted), attachments.sha256(sorted), noteDate, pageNo, notebookSerial }) )
+chainHash   = SHA256( prevChainHash + "|" + contentHash + "|" + createdAt(ISO, 서버) + "|" + revNo )
+// prevChainHash = 시스템 전체 직전 Revision의 chainHash (최초: "GENESIS-AMP-RNOTE")
+// 체인 직렬화를 위해 Revision 생성은 pg_advisory_xact_lock(42) 안에서 수행</code></pre>
+<h3>9.2 일일 앵커링 (매일 23:59, worker)</h3>
+<ol>
+  <li>당일 생성된 모든 <code>chainHash</code>로 머클루트 계산 → <code>HashAnchor</code> 저장</li>
+  <li>확정 노트 Markdown + 앵커 JSON을 <code>/srv/amp-rnote/ledger</code> Git 저장소에 커밋 → 원격(비공개 GitHub <code>amp-rnote-ledger</code>)에 push — GitHub 서버 시각이 제3자 기록 역할</li>
+  <li>신흥섭 대표 메일로 "YYYY-MM-DD 연구노트 해시원장: merkleRoot, 건수" 발송 (외부 메일함 = 독립 보관 증빙)</li>
+</ol>
+<h3>9.3 전자서명</h3>
+<table>
+<tr><th>단계</th><th>방식</th><th>상태</th></tr>
+<tr><td>1차 (본 개발)</td><td>최초 로그인 시 사용자별 Ed25519 키쌍 생성, 6자리 서명PIN으로 개인키 암호화. 제출·검토·확인 시 [TOTP 로그인 세션 + 서명PIN] 입력 → <code>chainHash</code> 서명 저장. 검증 화면에서 공개키로 검증</td><td><span class="tag t-ok">구현</span></td></tr>
+<tr><td>2차</td><td>「전자서명법」상 전자서명인증사업자 인증서(공동인증서·민간 간편인증 등) 연동으로 기록자 본인확인 강화</td><td><span class="tag t-chk">대표 확인</span> 전담기관 점검 시 1차 방식 인정 여부 확인 후 결정</td></tr>
+</table>
+<p><small class="muted">lib/sign.ts는 <code>Signer</code> 인터페이스로 추상화해 2차 연동 시 교체만 하도록 한다.</small></p>
+
+<!-- ============================================================ -->
+<h2 id="s10">10. GitHub 푸시 연동</h2>
+<h3>10.1 Webhook (자동수집의 원천)</h3>
+<ul>
+  <li>대상 저장소: 과제에 등록된 저장소(예: Smart FMEA 저장소) → Settings › Webhooks › <code>https://rnote.ampbiz.co.kr/api/webhooks/github</code>, 이벤트 <code>push</code>, Secret = <code>GITHUB_WEBHOOK_SECRET</code></li>
+  <li>수신 시 <code>X-Hub-Signature-256</code> HMAC 검증 → 커밋별 GitHub API(<code>GET /repos/{o}/{r}/commits/{sha}</code>)로 변경파일 조회 → <code>GitCommit</code> 저장</li>
+  <li>작성자 <code>githubLogin</code> → User 매핑, 서버 KST 날짜의 해당 기록자 노트(없으면 DRAFT 생성)에 자동 연결, <code>FileRef</code>(source=GIT) 생성, md 파일은 <code>isDoc=true</code></li>
+  <li>확정(CONFIRMED)된 날짜의 노트에는 연결하지 않고 다음 영업일 DRAFT로 연결</li>
+</ul>
+
+<h3 id="s10-2">10.2 푸시 후 스크립트 — <code>scripts/rn-push.sh</code></h3>
+<p>Git에는 post-push 훅이 없으므로, <b>개발자는 <code>git push</code> 대신 <code>rn-push</code>를 사용</b>한다 (alias 등록). 푸시 후 오늘 작업 메모와 로컬 테스트 결과를 노트 초안에 보내고 초안 URL을 띄운다.</p>
+<pre><code>#!/usr/bin/env bash
+# scripts/rn-push.sh — git push 후 연구노트 초안에 작업 정보 전송
+# 설치: git config --global alias.rnp '!bash ~/amp-rnote/scripts/rn-push.sh'
+# 사용: git rnp            (또는 git rnp origin main)
+set -euo pipefail
+RNOTE_URL="${RNOTE_URL:-https://rnote.ampbiz.co.kr}"
+RNOTE_TOKEN="${RNOTE_TOKEN:?RNOTE_TOKEN 환경변수 필요 (앱 > 설정 > 개인 토큰)}"
+
+REPO=$(basename -s .git "$(git config --get remote.origin.url)")
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+UPSTREAM=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null || echo "")
+RANGE=${UPSTREAM:+$UPSTREAM..HEAD}
+COMMITS=$(git log ${RANGE:--n20} --pretty=format:'%H' | paste -sd, -)
+
+git push "$@"                                   # 1) 실제 푸시
+
+[ -z "$COMMITS" ] &amp;&amp; { echo "푸시할 새 커밋 없음"; exit 0; }
+FILES=$(git diff --name-status ${UPSTREAM:-HEAD~1} HEAD 2>/dev/null || true)
+
+echo "오늘 작업 메모(사실만, 한 줄, 엔터=생략):"; read -r MEMO || MEMO=""
+TEST_SUMMARY=""
+if [ -f package.json ] &amp;&amp; grep -q '"test"' package.json; then
+  read -r -p "테스트 실행 결과 첨부? [y/N] " RUN
+  [ "${RUN:-N}" = "y" ] &amp;&amp; TEST_SUMMARY=$(npm test --silent 2&gt;&amp;1 | tail -n 15 || true)
+fi
+
+PAYLOAD=$(jq -n --arg repo "$REPO" --arg branch "$BRANCH" --arg commits "$COMMITS" \
+  --arg files "$FILES" --arg memo "$MEMO" --arg test "$TEST_SUMMARY" \
+  '{repo:$repo,branch:$branch,commits:($commits|split(",")),nameStatus:$files,memo:$memo,testSummary:$test}')
+
+RESP=$(curl -fsS -X POST "$RNOTE_URL/api/git/push-report" \
+  -H "Authorization: Bearer $RNOTE_TOKEN" -H "Content-Type: application/json" -d "$PAYLOAD")
+echo "연구노트 초안: $(echo "$RESP" | jq -r .draftUrl)"
+echo "※ 18:00 전 초안을 확인·보완 후 제출하세요."</code></pre>
+<p>Windows용 <code>scripts/rn-push.ps1</code>도 동일 동작으로 작성. 서버는 webhook과 push-report를 커밋 SHA로 중복 제거한다.</p>
+
+<h3 id="s10-3">10.3 GitHub Actions (스크립트 미사용 푸시 대비)</h3>
+<pre><code># .github/workflows/research-note.yml  (연동 대상 저장소에 추가)
+name: research-note
+on: { push: { branches: ['**'] } }
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify RNote
+        run: |
+          curl -fsS -X POST "${{ secrets.RNOTE_URL }}/api/git/actions-report" \
+            -H "Authorization: Bearer ${{ secrets.RNOTE_CI_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"repo":"${{ github.repository }}","before":"${{ github.event.before }}","after":"${{ github.sha }}","pusher":"${{ github.actor }}"}'</code></pre>
+<p><small class="muted">Webhook만으로 충분하면 Actions는 생략 가능. 둘 다 켜도 SHA 기준 중복 제거.</small></p>
+
+<!-- ============================================================ -->
+<h2 id="s11">11. Claude 평가·다음할일·초안</h2>
+<h3>11.1 호출 시점</h3>
+<table>
+<tr><th>시점</th><th>기능</th><th>저장 위치</th></tr>
+<tr><td>17:00 또는 기록자 "초안 생성" 클릭</td><td>당일 커밋·변경파일·메모·테스트결과로 <b>노트 초안</b> 생성 (목적/방법/결과 섹션 제안)</td><td>NoteDraft — 섹션마다 "AI 초안" 표시, 기록자가 <b>사실 확인 체크</b>해야 제출 가능</td></tr>
+<tr><td>제출 직후 (자동)</td><td><b>평가 결과 + 다음할일 + 기록 보완 지적</b></td><td>AiEvaluation (본문 해시와 분리)</td></tr>
+<tr><td>금요일 16:00</td><td>주간 평가 (계획 대비 실적, 다음주 제안)</td><td>WeeklyPlan.report 초안</td></tr>
+</table>
+
+<h3>11.2 평가 출력 JSON 스키마 (<code>lib/claude.ts</code>, tool_use로 강제)</h3>
+<pre><code>{
+  "summary": "오늘 연구 요약 3줄 이내",
+  "scores": {                       // 1~5
+    "recordCompleteness": 4,        // 기본 기재사항 충실도
+    "reproducibility": 3,           // 방법·조건으로 재현 가능한가
+    "planProgress": 4,              // 주간계획 대비 진도
+    "evidenceLinkage": 5            // 커밋·파일경로·첨부 연결
+  },
+  "complianceGaps": ["실패 데이터 미기재", "측정조건 누락"],   // 정부기준 관점 보완점
+  "missingFilePaths": ["커밋 a1b2c3d의 docs/*.md가 fileRefs에 없음"],
+  "risks": ["Import 파서 변경에 회귀 테스트 없음"],
+  "nextTodos": [ { "title": "FC시트 회귀테스트 추가", "estHours": 2, "priority": "H" } ],
+  "feedbackToRecorder": "결과 섹션에 실패한 첫 시도의 오류 로그를 남길 것",
+  "ipCandidate": false               // 특허 검토 가치 여부
+}</code></pre>
+<h3>11.3 시스템 프롬프트 요지 (<code>src/lib/prompts/evaluate.v1.md</code>)</h3>
+<ul>
+  <li>너는 기업부설연구소 연구노트 심사자다. 국가연구개발사업 연구노트 지침 관점에서 기록 충실도를 평가하라.</li>
+  <li>입력에 없는 사실을 만들지 말라. 추정은 "추정"으로 표시. 평가는 연구노트 본문이 아니라 참고 의견이다.</li>
+  <li>다음할일은 주간계획의 미완료 태스크와 어제 nextPlan을 우선 반영, 하루 7시간 이내.</li>
+  <li>FMEA 표기는 "AIAG-VDA FMEA 1판".</li>
+</ul>
+<p>입력 크기 제한: diff 본문은 보내지 않고 파일목록·통계·커밋메시지·노트본문만 전송(코드 유출 최소화). API 실패 시 노트 제출은 정상 진행, 평가는 재시도 큐.</p>
+
+<!-- ============================================================ -->
+<h2 id="s12">12. 결재 보고 · 자동메일 · 카톡 알림</h2>
+<h3>12.1 결재 흐름</h3>
+<div class="flow">
+  <span><b>이현우</b> 제출·서명</span>→
+  <span>📧+💬 <b>신재민</b> 검토요청</span>→
+  <span><b>신재민</b> 승인/반려</span>→
+  <span>📧+💬 <b>신흥섭</b> 확인요청</span>→
+  <span><b>신흥섭</b> 확인·서명·잠금</span>→
+  <span>📧+💬 이현우·신재민 완료통보</span>
+</div>
+<ul>
+  <li>반려 시: 사유 필수 → 이현우에게 메일+카톡, 피드백 자동 등록.</li>
+  <li>검토자 부재 시 확인자가 검토 단계 대결 가능(대결 표시·로그).</li>
+  <li><b>대표 간편결재</b>: 메일·카톡의 링크 → 모바일 결재 화면(요약 + Claude 평가 + 피드백 입력 + 서명PIN). 링크 토큰은 1회용·24시간 만료, 로그인 필수.</li>
+</ul>
+
+<h3>12.2 메일 템플릿 (결재요청)</h3>
+<pre><code>제목: [연구노트 결재요청] AMP-RN-2026-001 p.0007 (2026-11-09) 이현우 — PFMEA Import FC시트 매핑 수정
+본문:
+- 과제: (과제명)  / 권·쪽: AMP-RN-2026-001 · p.0007 / 제출: 2026-11-09 17:52 (서버시각)
+- 목적: …(1줄)
+- 결과: …(2줄)
+- 관련 파일: ampfmea:docs/import/FC_SHEET_RULE.md (M) 외 4건
+- 오늘 진도: FC 매핑 80% / 회귀테스트 0%
+- 다음 계획: …
+- Claude 평가(참고): 기록충실 4 · 재현성 3 · 진도 4 · 증빙연결 5 / 보완점: 실패 데이터 미기재
+▶ 결재하기: https://rnote.ampbiz.co.kr/approvals/xxxx  (24시간 유효)</code></pre>
+
+<h3>12.3 카카오 알림</h3>
+<table>
+<tr><th>템플릿 코드</th><th>수신</th><th>내용</th></tr>
+<tr><td><code>RN_APPROVAL_REQ</code></td><td>신재민 / 신흥섭</td><td>[연구노트 결재요청] #{기록자} #{날짜} #{제목} ▶ 결재 링크</td></tr>
+<tr><td><code>RN_APPROVED</code></td><td>이현우, 신재민</td><td>[연구노트 확인완료] #{날짜} p.#{쪽}</td></tr>
+<tr><td><code>RN_RETURNED</code></td><td>이현우</td><td>[연구노트 반려] #{사유}</td></tr>
+<tr><td><code>RN_REMIND</code></td><td>이현우 (→ 미제출 시 신재민)</td><td>[연구노트 미제출] 오늘 노트를 제출해 주세요</td></tr>
+<tr><td><code>RN_PENDING</code></td><td>신흥섭</td><td>[미결재 #{n}건] 가장 오래된 건 #{날짜}</td></tr>
+</table>
+<div class="box warn">카카오 알림톡은 <b>카카오톡 채널(비즈니스) + 발송대행사 계약 + 템플릿 심사</b>가 필요하다. 이현우 대리가 진행 중인 카카오톡 채널 챗봇과 같은 채널을 쓰도록 맞춘다. 계약 전까지 <code>KAKAO_PROVIDER=mock</code>(로그만 기록)으로 개발하고, 실패 시 SMS 대체발송.</div>
+
+<h3>12.4 스케줄 (Asia/Seoul)</h3>
+<table>
+<tr><th>시각</th><th>작업</th></tr>
+<tr><td>평일 09:00</td><td>이현우: 오늘 태스크 + 어제 다음계획 + 미조치 피드백 / 신흥섭: 미결재 건 (<code>RN_PENDING</code>)</td></tr>
+<tr><td>평일 17:00</td><td>Claude 초안 자동 생성(커밋 있는 경우)</td></tr>
+<tr><td>평일 17:30</td><td>미제출 시 이현우 리마인드</td></tr>
+<tr><td>평일 18:30</td><td>여전히 미제출 시 이현우+신재민 알림</td></tr>
+<tr><td>월 09:30</td><td>주간계획 미작성 시 알림 (제출 → 신흥섭 승인)</td></tr>
+<tr><td>금 16:00</td><td>주간보고 자동 초안 + Claude 주간평가 → 이현우 보완 후 결재</td></tr>
+<tr><td>매일 23:59</td><td>해시 앵커링 + 원장 커밋 + 대표 메일</td></tr>
+<tr><td>매일 02:00</td><td>암호화 백업 / 매월 1일 복원 테스트</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="s13">13. 주간계획 · 일일진도일정</h2>
+<h3>13.1 주간계획 (월요일)</h3>
+<ul>
+  <li>항목: 주간 목표(Markdown), 일자별 태스크(제목·계획시간·관련 저장소/문서 경로), 지난주 이월 태스크 자동 포함.</li>
+  <li>제출 → 신흥섭 승인 (메일·카톡). 승인 후 태스크 추가는 가능하나 "추가" 표시.</li>
+</ul>
+<h3>13.2 일일진도일정</h3>
+<ul>
+  <li>일일 노트 작성 시 오늘 태스크별 진척률·실제시간 입력 → <code>DailyTask</code> 갱신.</li>
+  <li>미완료 태스크는 다음날로 "이월(CARRIED)" — 이월 횟수 2회 이상 시 대시보드 경고.</li>
+  <li>화면: 주간 간트(계획 막대 vs 실적 막대), 일자 × 태스크 매트릭스, 주간 계획시간/실적시간 합계, 노트 제출 여부 캘린더(제출●/확인✔/미작성✕/휴가-).</li>
+</ul>
+<h3>13.3 주간보고 (금요일 자동 초안)</h3>
+<table>
+<tr><th>섹션</th><th>원천</th></tr>
+<tr><td>금주 실적</td><td>일일 노트 제목·결과 요약 (사실)</td></tr>
+<tr><td>계획 대비 진도</td><td>DailyTask 집계 (완료율, 이월 건)</td></tr>
+<tr><td>작성·수정 문서 목록</td><td>FileRef where isDoc=true (경로)</td></tr>
+<tr><td>피드백 조치 현황</td><td>Feedback resolved/미결</td></tr>
+<tr><td>Claude 주간평가·다음주 제안</td><td>AiEvaluation(weekly) — 참고 라벨</td></tr>
+<tr><td>다음주 계획</td><td>기록자 작성 → 다음 주간계획에 복사</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="s14">14. 화면 목록</h2>
+<table>
+<tr><th>ID</th><th>화면</th><th>주요 요소</th><th>권한</th></tr>
+<tr><td>SC-01</td><td>로그인 / 2단계 인증 / 서명키 등록</td><td>ID·PW·TOTP, 최초 서명PIN 설정</td><td>전체</td></tr>
+<tr><td>SC-02</td><td>대시보드</td><td>오늘 노트 상태, 오늘 태스크, 어제 다음계획, 미조치 피드백, 미결재, 이번주 진도 바</td><td>전체</td></tr>
+<tr><td>SC-03</td><td>노트 작성</td><td>5장 양식, 자동수집 커밋·파일경로 패널, AI 초안 버튼·사실확인 체크, 첨부, 진도 입력, 제출(서명PIN)</td><td>기록자</td></tr>
+<tr><td>SC-04</td><td>노트 상세 / 속지 보기</td><td>속지 레이아웃(테두리·쪽번호·서명란), Revision 이력·수정표시(diff), AI 평가 탭(분리), 피드백</td><td>권한자</td></tr>
+<tr><td>SC-05</td><td>결재함 (모바일 대응)</td><td>대기/완료 목록, 요약 카드, 승인·반려·코멘트·서명PIN</td><td>검토·확인</td></tr>
+<tr><td>SC-06</td><td>주간계획</td><td>목표, 일자별 태스크 편집, 제출·승인</td><td>전체</td></tr>
+<tr><td>SC-07</td><td>일일진도 / 캘린더</td><td>간트, 매트릭스, 제출 캘린더</td><td>전체</td></tr>
+<tr><td>SC-08</td><td>연구노트 권 관리</td><td>표지 정보, 목차(중요 노트), 권 마감, PDF 출력</td><td>관리자·확인자</td></tr>
+<tr><td>SC-09</td><td>열람대장 / 감사로그</td><td>누가·언제·무엇을 열람/출력, 필터, 엑셀 내보내기</td><td>관리자</td></tr>
+<tr><td>SC-10</td><td>무결성 검증</td><td>전체 체인 검증, 날짜별 앵커 대조, 서명 검증 결과(✔/✕)</td><td>관리자</td></tr>
+<tr><td>SC-11</td><td>설정</td><td>사용자·역할, 과제·저장소, 알림 수신자, 개인 API 토큰, 보존기간</td><td>관리자</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="s15">15. API 목록</h2>
+<table>
+<tr><th>Method</th><th>Path</th><th>설명</th></tr>
+<tr><td>GET/PUT</td><td><code>/api/notes/today</code></td><td>오늘 노트(없으면 DRAFT 생성) 조회·자동저장</td></tr>
+<tr><td>POST</td><td><code>/api/notes/:id/ai-draft</code></td><td>Claude 초안 생성</td></tr>
+<tr><td>POST</td><td><code>/api/notes/:id/submit</code></td><td>필수항목·fileRefs·사실확인 검증 → Revision 생성 → 서명 → 결재요청 알림</td></tr>
+<tr><td>POST</td><td><code>/api/notes/:id/revise</code></td><td>수정 Revision (changeReason 필수)</td></tr>
+<tr><td>GET</td><td><code>/api/notes/:id/revisions</code></td><td>이력·diff</td></tr>
+<tr><td>POST</td><td><code>/api/notes/:id/attachments</code></td><td>업로드 (sha256 계산)</td></tr>
+<tr><td>POST</td><td><code>/api/approvals/:id/approve</code> · <code>/reject</code></td><td>결재 (서명PIN)</td></tr>
+<tr><td>POST</td><td><code>/api/feedbacks</code> · <code>/api/feedbacks/:id/resolve</code></td><td>피드백</td></tr>
+<tr><td>POST</td><td><code>/api/webhooks/github</code></td><td>GitHub push (HMAC)</td></tr>
+<tr><td>POST</td><td><code>/api/git/push-report</code> · <code>/api/git/actions-report</code></td><td>푸시 후 스크립트·Actions (Bearer 토큰)</td></tr>
+<tr><td>GET/POST</td><td><code>/api/plans/weekly</code> · <code>/api/plans/tasks</code></td><td>주간계획·태스크</td></tr>
+<tr><td>GET</td><td><code>/api/notebooks/:id/pdf?scope=cover|index|pages|all</code></td><td>PDF 출력 (EXPORT 감사로그)</td></tr>
+<tr><td>GET</td><td><code>/api/verify/chain</code> · <code>/api/verify/note/:id</code></td><td>무결성 검증</td></tr>
+<tr><td>GET</td><td><code>/api/audit?action=VIEW</code></td><td>열람대장</td></tr>
+</table>
+<p>모든 GET 상세 조회는 미들웨어에서 <code>AuditLog(VIEW)</code> 기록.</p>
+
+<!-- ============================================================ -->
+<h2 id="s16">16. PDF 출력 (표지 · 목차 · 속지)</h2>
+<table>
+<tr><th>페이지</th><th>레이아웃 (KOITA 교재 서면연구노트 양식 준용)</th></tr>
+<tr><td>표지</td><td>"연구노트" / 연구개발기관명 ㈜에이엠피시스템 / 일련번호(관리부서 부여) / 과제명·계정번호 / 권번호(단일 과제 복수 권) / 기록자 / 작성기간 / 소속(사번·전화) / 보관장소·책임자</td></tr>
+<tr><td>목차 (INDEX)</td><td>PAGE | DESCRIPTION — 중요 표시 노트의 쪽번호와 요약</td></tr>
+<tr><td>속지</td><td>A4, <b>테두리 필수</b>, 우상단 쪽번호(누락·중복 없음), 머리: 과제명·작성일자·제목 / 본문: 5장 필드 / 관련 파일경로 표 / 첨부 목록(sha256 앞 12자리) / 수정이력(취소선·사유) / <b>하단: 기록자·확인자(검토자) 성명·서명·서명일자</b> / 바닥: contentHash·chainHash 앞 16자리 + 검증 URL</td></tr>
+<tr><td>AI 평가</td><td>속지와 별도 부록 페이지 "AI 평가(참고) — 연구노트 본문 아님" (출력 옵션, 기본 제외)</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="s17">17. 보안 · 백업 · 보존</h2>
+<ul>
+  <li><b>접근</b>: HTTPS 전용, TOTP 2단계, 역할 기반 권한, 외부 비공개(공개 링크 없음), 로그인 5회 실패 잠금, 관리자 화면 사내 IP 제한(선택).</li>
+  <li><b>퇴사·이동</b>: 계정 비활성화만, 노트·서명 기록은 삭제하지 않음(연구노트 소유권은 회사).</li>
+  <li><b>백업</b>: 매일 02:00 <code>pg_dump</code> + 첨부·원장 디렉터리 → gpg 암호화 → 외부 저장소(NAS/클라우드) 동기화, 일 30개·월 12개·연 무기한 보관. 매월 복원 테스트 결과를 <code>docs/PROGRESS.md</code>가 아닌 감사로그에 기록.</li>
+  <li><b>보존</b>: 권 마감 후 읽기전용, 보존기간 기본 30년(설정값, 부처·과제 기준 확인). 폐기는 확인자 승인 + 폐기대장(AuditLog DISPOSE) — 해시 앵커는 폐기 후에도 유지.</li>
+  <li><b>AI 데이터</b>: Claude API에는 소스코드 diff를 보내지 않음. API 키는 서버 env에만.</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="s18">18. 개발 일정 (Claude Code 2주, Day 단위)</h2>
+<table>
+<tr><th>주</th><th>Day</th><th>작업</th><th>산출물(경로)</th><th>완료 조건</th></tr>
+<tr><td rowspan="5">1주</td><td>D1</td><td>프로젝트 생성, Docker(Postgres), Prisma 스키마, 불변 트리거, 시드, 로그인+TOTP</td><td><code>prisma/schema.prisma</code>, <code>prisma/sql/immutable_grants.sql</code>, <code>src/app/(auth)</code></td><td>T-01, Revision UPDATE 시 DB 오류</td></tr>
+<tr><td>D2</td><td>노트 작성/자동저장/제출, Revision·해시체인, 필수필드·fileRefs 검증</td><td><code>src/lib/{hash,chain}.ts</code>, <code>src/app/notes</code></td><td>T-02, T-04, T-08</td></tr>
+<tr><td>D3</td><td>서명키·서명PIN, 결재 흐름, 메일 발송, 결재함(모바일)</td><td><code>src/lib/sign.ts</code>, <code>src/lib/notify/mail.ts</code>, <code>src/app/approvals</code></td><td>T-03, T-06</td></tr>
+<tr><td>D4</td><td>GitHub webhook, push-report API, <code>rn-push.sh/.ps1</code>, Actions, fileRefs 자동</td><td><code>src/app/api/webhooks/github</code>, <code>scripts/rn-push.*</code>, <code>.github/workflows/research-note.yml</code></td><td>T-10, 실제 푸시 1회로 커밋·md 경로 수집 확인</td></tr>
+<tr><td>D5</td><td>Claude 초안·평가·다음할일, 피드백, 주간계획·태스크·진도 입력</td><td><code>src/lib/claude.ts</code>, <code>src/lib/prompts/*.md</code>, <code>src/app/plans</code></td><td>T-09, 평가 JSON 스키마 검증</td></tr>
+<tr><td rowspan="5">2주</td><td>D6</td><td>PDF 표지·목차·속지, 권 관리·마감</td><td><code>src/lib/pdf/*</code>, <code>src/app/notebooks</code></td><td>T-07, T-11</td></tr>
+<tr><td>D7</td><td>카카오 알림 어댑터(mock/솔라피), SMS 대체, worker 스케줄 전체</td><td><code>src/lib/notify/kakao.ts</code>, <code>src/worker/cron.ts</code></td><td>12.4 스케줄 시간 모의 실행 통과</td></tr>
+<tr><td>D8</td><td>감사로그·열람대장, 무결성 검증 화면·CLI, 일일 앵커링·원장 Git</td><td><code>src/app/{audit,verify}</code>, <code>scripts/verify-chain.ts</code></td><td>T-05, T-12</td></tr>
+<tr><td>D9</td><td>서버 배포(Nginx·SSL), 백업·복원 스크립트, 운영 시드(실제 과제·권)</td><td><code>docker-compose.yml</code>, <code>nginx/rnote.conf</code>, <code>scripts/backup.sh</code></td><td>T-13, 운영 URL 접속</td></tr>
+<tr><td>D10</td><td>인수시험 전 항목, 자체규정·준수매트릭스 문서, 사용자 매뉴얼, 이현우 교육</td><td><code>docs/compliance/*.md</code>, <code>docs/USER_GUIDE.md</code></td><td>19장 전 항목 PASS, 대표 승인</td></tr>
+</table>
+<p>매 Day 종료 시 <code>docs/PROGRESS.md</code>에 [완료/미완/이슈/다음 Day] 기록 후 커밋. <b>이 앱 개발 자체도 D1부터 RNote 대상 과제로 기록 가능</b>(D3 이후 실사용 시작).</p>
+
+<!-- ============================================================ -->
+<h2 id="s19">19. 인수시험 체크리스트</h2>
+<table>
+<tr><th>ID</th><th>시험</th><th>합격 기준</th><th>요건</th></tr>
+<tr><td>T-01</td><td>클라이언트에서 작성일시 조작 시도(요청 body에 createdAt)</td><td>무시되고 서버시각 저장</td><td>R2</td></tr>
+<tr><td>T-02</td><td>제출 후 수정</td><td>새 Revision 생성, 사유 없으면 거부, 이전 내용 취소선 표시</td><td>R4</td></tr>
+<tr><td>T-03</td><td>서명 검증</td><td>공개키로 서명 검증 ✔, 다른 사용자 키로 ✕</td><td>R1</td></tr>
+<tr><td>T-04</td><td>DB에서 직접 본문 1글자 변경(superuser)</td><td>무결성 검증 화면에서 해당 Revision 이후 ✕ 표시</td><td>R3</td></tr>
+<tr><td>T-05</td><td>앵커 대조</td><td>원장 Git 커밋·대표 메일의 머클루트와 일치</td><td>R3</td></tr>
+<tr><td>T-06</td><td>결재 전 과정</td><td>이현우 제출 → 신재민 메일·카톡 → 승인 → 신흥섭 메일·카톡 → 확인 → 완료통보, 각 서명·일시 기록</td><td>R5</td></tr>
+<tr><td>T-07</td><td>쪽번호</td><td>동시 제출 2건에서도 중복·누락 없음</td><td>R6</td></tr>
+<tr><td>T-08</td><td>필수항목 누락 제출</td><td>제출 거부 + 누락 필드 안내</td><td>R7</td></tr>
+<tr><td>T-09</td><td>AI 초안 사실확인 미체크 제출 / AI 평가 표시</td><td>제출 거부 / 평가는 본문과 분리 라벨</td><td>R9</td></tr>
+<tr><td>T-10</td><td>md 파일 수정 커밋 푸시</td><td>fileRefs에 경로·변경유형·SHA·isDoc=true 기록, fileRefs 0건이면 제출 거부</td><td>R10</td></tr>
+<tr><td>T-11</td><td>PDF 출력</td><td>표지 전 항목, 목차, 속지 테두리·쪽번호·서명란·해시 출력</td><td>R11, R12</td></tr>
+<tr><td>T-12</td><td>열람</td><td>모든 조회·출력이 열람대장에 기록, 권한 없는 사용자 403</td><td>R13</td></tr>
+<tr><td>T-13</td><td>백업 복원</td><td>새 DB에 복원 후 체인 검증 전부 ✔</td><td>R14</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="s20">20. 대표 확인 필요 사항 (미확인 — 지어내지 말 것)</h2>
+<table>
+<tr><th>#</th><th>항목</th><th>필요 이유</th><th>기본값(임시)</th></tr>
+<tr><td>1</td><td>지원금 대상 과제명·과제번호/계정번호</td><td>표지·노트 머리 필수</td><td><code>TODO_CONFIRM</code></td></tr>
+<tr><td>2</td><td>연구전담부서 인정번호·부서장, 확인자 지정</td><td>확인자 자격</td><td>확인자 = 신흥섭 대표</td></tr>
+<tr><td>3</td><td>설치 서버(사내 서버 / Cafe24 VPS)·도메인</td><td>배포·Webhook URL</td><td><code>rnote.ampbiz.co.kr</code> 가정</td></tr>
+<tr><td>4</td><td>메일 발신 계정 (회사 메일 SMTP 등)</td><td>자동메일</td><td>—</td></tr>
+<tr><td>5</td><td>카카오톡 채널·알림톡 대행사 계약(비용)</td><td>카톡 알림</td><td>mock</td></tr>
+<tr><td>6</td><td>전자서명 방식 인정 여부(1차 자체서명 vs 공인 인증서)</td><td>R1 엄격 충족</td><td>1차 자체서명</td></tr>
+<tr><td>7</td><td>보존기간 (과제·부처 기준)</td><td>R14</td><td>30년</td></tr>
+<tr><td>8</td><td>연동 GitHub 저장소 목록·이현우 GitHub 계정</td><td>자동수집</td><td>—</td></tr>
+<tr><td>9</td><td>Claude API 키·월 사용 한도</td><td>평가 비용</td><td>—</td></tr>
+<tr><td>10</td><td>외부 백업 저장소 위치</td><td>장기보존</td><td>—</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="s21">부록 A. <code>CLAUDE.md</code> 초안</h2>
+<pre><code># AMP RNote — Claude Code 작업 규칙
+## 프로젝트
+- 정부기준 전자연구노트 시스템. 명세: docs/SPEC.html (최우선)
+- 스택: Next.js 14 App Router, TypeScript strict, Prisma, PostgreSQL 16
+
+## 절대 규칙 (위반 시 작업 중단 후 보고)
+1. NoteRevision / AuditLog / HashAnchor 에 update/delete 코드 금지 (append-only)
+2. 모든 시각은 서버 DB now() — 클라이언트 시각을 저장하지 말 것
+3. 해시 계산은 src/lib/hash.ts canonicalJSON만 사용, 필드 추가 시 hashVersion 올리고 DECISIONS.md 기록
+4. AI 생성 텍스트는 본문과 분리(AiEvaluation) — 본문 반영은 기록자 사실확인 체크 후만
+5. 노트 제출은 필수필드 + fileRefs ≥ 1 검증 통과 시에만
+6. 모르는 설정값은 TODO_CONFIRM, 지어내지 말 것
+7. 외부 발송(메일·카톡)은 NOTIFY_DRY_RUN=true 기본, 테스트에서 실발송 금지
+
+## 작업 방식
+- docs/SPEC.html 18장 Day 단위로 진행, 끝나면 19장 해당 T-xx 시험 작성·통과
+- 매 Day 종료: docs/PROGRESS.md 갱신 → 커밋 메시지 "D{n}: 요약"
+- 커밋 후 `git rnp`(scripts/rn-push.sh)로 푸시 — 이 저장소도 연구노트 대상
+- 변경한 md 문서 경로는 커밋 메시지 본문에 나열
+
+## 명령
+- npm run dev / npm run test / npm run verify:chain / npm run worker
+- docker compose up -d db</code></pre>
+
+<h2 id="s22">부록 B. 환경변수 (<code>.env.example</code>)</h2>
+<pre><code>DATABASE_URL=postgresql://rnote_app:***@localhost:5432/rnote
+DATABASE_URL_ADMIN=postgresql://rnote_admin:***@localhost:5432/rnote   # 마이그레이션 전용
+NEXTAUTH_URL=https://rnote.ampbiz.co.kr      # TODO_CONFIRM
+NEXTAUTH_SECRET=
+TZ=Asia/Seoul
+ORG_NAME=㈜에이엠피시스템
+ORG_DEPT=연구전담부서
+RETENTION_YEARS=30
+
+GITHUB_WEBHOOK_SECRET=
+GITHUB_TOKEN=                                 # 커밋 상세 조회 (read-only)
+LEDGER_REPO_PATH=/srv/amp-rnote/ledger
+LEDGER_REMOTE=git@github.com:TODO_CONFIRM/amp-rnote-ledger.git
+
+ANTHROPIC_API_KEY=
+ANTHROPIC_MODEL=claude-sonnet-5-5
+
+SMTP_HOST=  SMTP_PORT=465  SMTP_USER=  SMTP_PASS=  MAIL_FROM=
+NOTIFY_DRY_RUN=true
+KAKAO_PROVIDER=mock                           # mock | solapi
+KAKAO_API_KEY=  KAKAO_API_SECRET=  KAKAO_PFID=  KAKAO_SENDER_PHONE=
+
+STORAGE_ROOT=/srv/amp-rnote/storage
+BACKUP_ROOT=/srv/amp-rnote/backup
+BACKUP_GPG_RECIPIENT=</code></pre>
+
+<p style="margin-top:40px"><small class="muted">근거: 국가연구개발사업 연구노트 지침이 반영된 대학 연구노트 규정(세종대·포스텍·중앙대), 농촌진흥청 개정 안내(보존 30년 이상), 「기업부설연구소등의 연구개발 지원에 관한 법률 시행규칙」(2026.2.1 시행), KOITA 기업부설연구소 운영 필수사항 설명회 교재(연구노트 작성방법). 최신 지침 원문은 착수 전 확인.</small></p>
+</main>
+</div>
+</body>
+</html>
